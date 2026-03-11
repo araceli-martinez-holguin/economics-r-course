@@ -2,7 +2,7 @@
 ## Course Materials
 
 **Instructor:** Araceli Martínez Holguín  
-**Institution:**School of Economics, National Autonomous University of Mexico (UNAM)  
+**Institution:** School of Economics, National Autonomous University of Mexico (UNAM)  
 **Course:** Economics Programming with R
 
 ## Course Overview
