@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Araceli Martinez Holguin" />
+
+
+<title>Práctica 1</title>
+
+<script src="libs/header-attrs-2.30/header-attrs.js"></script>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="libs/navigation-1.1/tabsets.js"></script>
+<link href="libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Práctica 1</h1>
+<h4 class="author">Araceli Martinez Holguin</h4>
+
+</div>
+
+
+<hr />
+<div id="introducción" class="section level2">
+<h2>📌 Introducción</h2>
+<p>En esta práctica analizaremos datos climáticos históricos de
+distintos países utilizando la base de datos <strong>CRU TS
+4.09</strong> (Climatic Research Unit Time Series), desarrollada por la
+Universidad de East Anglia (Reino Unido). Esta base contiene registros
+mensuales desde 1901 hasta 2024 a escala de país.</p>
+<div id="variables-disponibles" class="section level3">
+<h3>Variables disponibles</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Código</th>
+<th>Variable</th>
+<th>Unidad</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>pre</code></td>
+<td>Precipitación total</td>
+<td>mm</td>
+</tr>
+<tr class="even">
+<td><code>tmn</code></td>
+<td>Temperatura mínima media</td>
+<td>°C</td>
+</tr>
+<tr class="odd">
+<td><code>tmp</code></td>
+<td>Temperatura media</td>
+<td>°C</td>
+</tr>
+<tr class="even">
+<td><code>tmx</code></td>
+<td>Temperatura máxima media</td>
+<td>°C</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="objetivo" class="section level3">
+<h3>Objetivo</h3>
+<p>Al finalizar esta práctica serás capaz de:</p>
+<ol style="list-style-type: decimal">
+<li>Descargar y leer datos climáticos en formato tabular con R.</li>
+<li>Calcular estadísticas descriptivas mensuales.</li>
+<li>Visualizar patrones climáticos con gráficos de barras.</li>
+<li>Reproducir el análisis para distintos países y variables.</li>
+</ol>
+<hr />
+</div>
+</div>
+<div id="librerías-necesarias" class="section level2">
+<h2>📦 Librerías necesarias</h2>
+<p>Instala la librería si aún no la tienes:</p>
+<pre class="r"><code>install.packages(&quot;readr&quot;)</code></pre>
+<p>Carga la librería al inicio de cada sesión:</p>
+<pre class="r"><code>library(readr)</code></pre>
+<hr />
+</div>
+<div id="configuración-inicial" class="section level2">
+<h2>⚙️ Configuración inicial</h2>
+<div id="directorio-de-trabajo" class="section level3">
+<h3>Directorio de trabajo</h3>
+<p>Establece la carpeta donde se guardarán los archivos descargados y
+las gráficas generadas:</p>
+<pre class="r"><code>setwd(&quot;~/Documents/Cursos-R/Tarea-0&quot;)</code></pre>
+</div>
+<div id="variables-y-países-de-interés" class="section level3">
+<h3>Variables y países de interés</h3>
+<p>Definimos los vectores que usaremos en los ciclos de descarga y
+lectura.<br />
+Puedes modificar <code>countries</code> para incluir otros países
+disponibles en la base CRU.</p>
+<pre class="r"><code>variables &lt;- c(&quot;pre&quot;, &quot;tmn&quot;, &quot;tmp&quot;, &quot;tmx&quot;)
+
+countries &lt;- c(&quot;Mexico&quot;, &quot;Brazil&quot;, &quot;USA&quot;, &quot;Germany&quot;, &quot;China&quot;)</code></pre>
+<hr />
+</div>
+</div>
+<div id="descarga-de-datos-cru" class="section level2">
+<h2>📥 Descarga de datos CRU</h2>
+<p>Los archivos se descargan directamente del servidor de la Universidad
+de East Anglia.<br />
+El ciclo <code>for</code> revisa si cada archivo ya existe antes de
+descargarlo, evitando descargas repetidas.<br />
+Si un archivo no existe en el servidor, <code>tryCatch</code> captura el
+error y muestra un mensaje en lugar de detener la ejecución.</p>
+<pre class="r"><code>base_url &lt;- &quot;https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.09/crucy.2503061057.v4.09/countries&quot;
+
+for (country in countries) {
+  for (var in variables) {
+    file &lt;- paste0(&quot;crucy.v4.09.1901.2024.&quot;, country, &quot;.&quot;, var, &quot;.per&quot;)
+    if (!file.exists(file)) {
+      tryCatch(
+        download.file(paste0(base_url, &quot;/&quot;, var, &quot;/&quot;, file), destfile = file, mode = &quot;wb&quot;),
+        error = function(e) message(&quot;404: &quot;, file)
+      )
+    }
+  }
+}</code></pre>
+<blockquote>
+<p>✅ <strong>Resultado esperado:</strong> Deberías ver los archivos
+<code>.per</code> en tu directorio de trabajo. Puedes verificarlo con
+<code>list.files(pattern = ".per")</code>.</p>
+</blockquote>
+<hr />
+</div>
+<div id="lectura-de-datos" class="section level2">
+<h2>📂 Lectura de datos</h2>
+<p>Cada archivo <code>.per</code> tiene 4 líneas de encabezado que
+debemos saltar (<code>skip = 4</code>).<br />
+Los valores <code>-999.0</code> indican datos faltantes y se reemplazan
+por <code>NA</code> para que R los maneje correctamente.<br />
+Todos los datos se almacenan en una lista llamada
+<code>climate_data</code>, donde cada elemento corresponde a un par
+país-variable.</p>
+<pre class="r"><code>col_names &lt;- c(&quot;Year&quot;, &quot;Jan&quot;, &quot;Feb&quot;, &quot;Mar&quot;, &quot;Apr&quot;, &quot;May&quot;, &quot;Jun&quot;,
+               &quot;Jul&quot;, &quot;Aug&quot;, &quot;Sep&quot;, &quot;Oct&quot;, &quot;Nov&quot;, &quot;Dec&quot;,
+               &quot;MAM&quot;, &quot;JJA&quot;, &quot;SON&quot;, &quot;DJF&quot;, &quot;ANN&quot;)
+
+climate_data &lt;- list()
+
+for (country in countries) {
+  for (var in variables) {
+    file &lt;- paste0(&quot;crucy.v4.09.1901.2024.&quot;, country, &quot;.&quot;, var, &quot;.per&quot;)
+    if (file.exists(file)) {
+      df &lt;- read_table(file, skip = 4, col_names = col_names, na = &quot;-999.0&quot;)
+      df$Country &lt;- country
+      df$Variable &lt;- var
+      climate_data[[paste0(country, &quot;_&quot;, var)]] &lt;- df
+    }
+  }
+}</code></pre>
+<blockquote>
+<p>✅ <strong>Resultado esperado:</strong> La lista
+<code>climate_data</code> debe contener 20 elementos (5 países × 4
+variables). Verifica con <code>length(climate_data)</code> y explora uno
+con <code>head(climate_data[["Mexico_pre"]])</code>.</p>
+</blockquote>
+<hr />
+</div>
+<div id="precipitación-mensual-promedio-méxico" class="section level2">
+<h2>🌧️ Precipitación mensual promedio — México</h2>
+<div id="cálculo-de-estadísticas-descriptivas" class="section level3">
+<h3>Cálculo de estadísticas descriptivas</h3>
+<p>Usamos <code>sapply</code> para aplicar una función a cada mes y
+calcular estadísticas sobre los 124 años de registro (1901–2024).</p>
+<pre class="r"><code># Seleccionamos México y la variable precipitación
+mexico_pre &lt;- climate_data[[&quot;Mexico_pre&quot;]]
+
+# Vector de nombres de meses (coincide con las columnas del data frame)
+months &lt;- c(&quot;Jan&quot;, &quot;Feb&quot;, &quot;Mar&quot;, &quot;Apr&quot;, &quot;May&quot;, &quot;Jun&quot;,
+            &quot;Jul&quot;, &quot;Aug&quot;, &quot;Sep&quot;, &quot;Oct&quot;, &quot;Nov&quot;, &quot;Dec&quot;)
+
+# Calculamos estadísticas por mes
+mean_monthly &lt;- sapply(months, function(m) mean(mexico_pre[[m]], na.rm = TRUE))
+sd_monthly   &lt;- sapply(months, function(m) sd(mexico_pre[[m]], na.rm = TRUE))
+min_monthly  &lt;- sapply(months, function(m) min(mexico_pre[[m]], na.rm = TRUE))
+max_monthly  &lt;- sapply(months, function(m) max(mexico_pre[[m]], na.rm = TRUE))
+
+# Redondeamos a enteros para facilitar la lectura
+mean_monthly &lt;- as.integer(round(mean_monthly))
+sd_monthly   &lt;- as.integer(round(sd_monthly))
+min_monthly  &lt;- as.integer(round(min_monthly))
+max_monthly  &lt;- as.integer(round(max_monthly))
+
+# Guardamos en una tabla
+stats_mexico &lt;- data.frame(
+  Month = months,
+  Mean  = mean_monthly,
+  SD    = sd_monthly,
+  Min   = min_monthly,
+  Max   = max_monthly
+)
+print(stats_mexico)</code></pre>
+<blockquote>
+<p>✅ <strong>Resultado esperado:</strong> Una tabla con 12 filas (una
+por mes) y 5 columnas. Los meses de verano (Jun–Sep) deben mostrar los
+valores más altos de precipitación para México.</p>
+</blockquote>
+</div>
+<div id="gráfico-de-barras" class="section level3">
+<h3>Gráfico de barras</h3>
+<pre class="r"><code>png(&quot;bp_precipitacion_mexico.png&quot;, width = 800, height = 600, res = 100)
+
+bp_mexico &lt;- barplot(mean_monthly,
+              names.arg = months,
+              col       = &quot;navy&quot;,
+              main      = &quot;Precipitación Mensual Promedio en México (1901-2024)&quot;,
+              ylab      = &quot;Precipitación (mm)&quot;,
+              xlab      = &quot;Mes&quot;,
+              ylim      = c(0, max(mean_monthly) * 1.15),
+              cex.names = 0.9,
+              cex.axis  = 0.9,
+              las       = 1,
+              font.lab  = 2)
+
+# Etiquetas con el valor sobre cada barra
+text(x      = bp_mexico[, 1],
+     y      = mean_monthly + 2,
+     labels = mean_monthly,
+     cex    = 0.8,
+     col    = &quot;black&quot;,
+     adj    = c(0.5, 0))
+
+# Línea de la media anual
+abline(h   = mean(mean_monthly),
+       col = &quot;red&quot;,
+       lwd = 2,
+       lty = 2)
+
+legend(&quot;topleft&quot;,
+       legend = paste(&quot;Media anual:&quot;, round(mean(mean_monthly)), &quot;mm&quot;),
+       col    = &quot;red&quot;,
+       lty    = 2,
+       lwd    = 2,
+       bty    = &quot;n&quot;)
+
+dev.off()</code></pre>
+<blockquote>
+<p>✅ <strong>Resultado esperado:</strong> Se genera el archivo
+<code>bp_precipitacion_mexico.png</code> en tu directorio de trabajo. La
+gráfica debe mostrar un patrón estacional claro, con lluvias
+concentradas entre junio y septiembre.</p>
+</blockquote>
+<hr />
+</div>
+</div>
+<div id="ejercicio-1-reproducir-el-análisis-para-brasil"
+class="section level2">
+<h2>🏋️ Ejercicio 1: Reproducir el análisis para Brasil</h2>
+<p>Replica el análisis anterior para <strong>Brasil</strong>. Utiliza el
+código de México como guía y adapta las partes necesarias.</p>
+<p><strong>Instrucciones:</strong></p>
+<ol style="list-style-type: decimal">
+<li>Extrae los datos de Brasil de <code>climate_data</code>.</li>
+<li>Calcula las estadísticas descriptivas mensuales e imprímelas.</li>
+<li>Genera y guarda la gráfica como
+<code>bp_precipitacion_brasil.png</code>.</li>
+</ol>
+<blockquote>
+<p>💡 <strong>Pistas:</strong><br />
+- Cambia el nombre del objeto a <code>brazil_pre</code> y el del barplot
+a <code>bp_brazil</code>.<br />
+- Usa <code>col = "orchid"</code> para las barras.<br />
+- Coloca la leyenda en <code>"topright"</code>, ya que Brasil tiene más
+lluvia en los primeros meses del año.</p>
+</blockquote>
+<details>
+<summary>
+👉 Ver solución
+</summary>
+<pre class="r"><code>brazil_pre &lt;- climate_data[[&quot;Brazil_pre&quot;]]
+
+mean_monthly &lt;- sapply(months, function(m) mean(brazil_pre[[m]], na.rm = TRUE))
+sd_monthly   &lt;- sapply(months, function(m) sd(brazil_pre[[m]], na.rm = TRUE))
+min_monthly  &lt;- sapply(months, function(m) min(brazil_pre[[m]], na.rm = TRUE))
+max_monthly  &lt;- sapply(months, function(m) max(brazil_pre[[m]], na.rm = TRUE))
+
+mean_monthly &lt;- as.integer(round(mean_monthly))
+sd_monthly   &lt;- as.integer(round(sd_monthly))
+min_monthly  &lt;- as.integer(round(min_monthly))
+max_monthly  &lt;- as.integer(round(max_monthly))
+
+stats_brazil &lt;- data.frame(
+  Month = months,
+  Mean  = mean_monthly,
+  SD    = sd_monthly,
+  Min   = min_monthly,
+  Max   = max_monthly
+)
+print(stats_brazil)
+
+png(&quot;bp_precipitacion_brasil.png&quot;, width = 800, height = 600, res = 100)
+
+bp_brazil &lt;- barplot(mean_monthly,
+                     names.arg = months,
+                     col       = &quot;orchid&quot;,
+                     main      = &quot;Precipitación Mensual Promedio en Brasil (1901-2024)&quot;,
+                     ylab      = &quot;Precipitación (mm)&quot;,
+                     xlab      = &quot;Mes&quot;,
+                     ylim      = c(0, max(mean_monthly) * 1.15),
+                     cex.names = 0.9,
+                     cex.axis  = 0.9,
+                     las       = 1,
+                     font.lab  = 2)
+
+text(x      = bp_brazil[, 1],
+     y      = mean_monthly + 2,
+     labels = mean_monthly,
+     cex    = 0.8,
+     col    = &quot;black&quot;,
+     adj    = c(0.5, 0))
+
+abline(h   = mean(mean_monthly),
+       col = &quot;red&quot;,
+       lwd = 2,
+       lty = 2)
+
+legend(&quot;topright&quot;,
+       legend = paste(&quot;Media anual:&quot;, round(mean(mean_monthly)), &quot;mm&quot;),
+       col    = &quot;red&quot;,
+       lty    = 2,
+       lwd    = 2,
+       bty    = &quot;n&quot;)
+
+dev.off()</code></pre>
+</details>
+<hr />
+</div>
+<div id="ejercicio-2-analizar-una-variable-diferente"
+class="section level2">
+<h2>🏋️ Ejercicio 2: Analizar una variable diferente</h2>
+<p>Reproduce el análisis de México pero usando la <strong>temperatura
+media</strong> (<code>tmp</code>) en lugar de precipitación.</p>
+<p><strong>Instrucciones:</strong></p>
+<ol style="list-style-type: decimal">
+<li>Extrae <code>climate_data[["Mexico_tmp"]]</code>.</li>
+<li>Calcula las estadísticas descriptivas mensuales e imprímelas.</li>
+<li>Genera el gráfico con un color distinto y un título apropiado.</li>
+<li>Responde: ¿en qué mes se registra la temperatura más alta? ¿Y la más
+baja?</li>
+</ol>
+<hr />
+</div>
+<div id="ejercicio-3-desafío-comparar-dos-países"
+class="section level2">
+<h2>🏋️ Ejercicio 3 (Desafío): Comparar dos países</h2>
+<p>Genera una gráfica que muestre la precipitación media mensual de
+<strong>México y Brasil en el mismo gráfico</strong>, usando líneas
+superpuestas.</p>
+<blockquote>
+<p>💡 <strong>Pista:</strong> Calcula <code>mean_monthly</code> para
+cada país por separado, luego usa <code>plot()</code> para el primero y
+<code>lines()</code> para agregar el segundo. No olvides añadir una
+leyenda con <code>legend()</code>.</p>
+</blockquote>
+</div>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
