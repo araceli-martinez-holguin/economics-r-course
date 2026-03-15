@@ -10,9 +10,8 @@
 This repository contains R code, examples, and assignments for the Economics R Programming course.
 
 ## Folder Structure
-- `practices/` - R scripts
-- `lectures/` - R scripts
-- `data/` - Datasets used in practices/lectures/assignments
+- `laboratories/` - R scripts
+- `data/` - Datasets used in laboratories/assignments
 - `assignments/` - R scripts 
 
 ## Topics Covered
