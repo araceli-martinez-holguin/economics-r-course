@@ -4,14 +4,16 @@
 **Instructor:** Araceli Martínez Holguín  
 **Institution:** School of Economics, National Autonomous University of Mexico (UNAM)  
 **Course:** Economics Programming with R
+**Semester:** February to June 2026 (Semester 2026-2)
 
 ## Course Overview
 This repository contains R code, examples, and assignments for the Economics R Programming course.
 
 ## Folder Structure
-- `practicas/` - R scripts 
-- `data/` - Example datasets
-- `tareas/` - Homework templates and solutions
+- `practices/` - R scripts
+- `lectures/` - R scripts
+- `data/` - Datasets used in practices/lectures/assignments
+- `assignments/` - R scripts 
 
 ## Topics Covered
 1. Data manipulation 
