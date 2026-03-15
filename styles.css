@@ -1,0 +1,98 @@
+/* Import Montserrat */
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+/* COLOR PALETTE */
+
+:root{
+--dark:#2F4F4F;
+--light1:#97FFFF;
+--light2:#8DEEEE;
+--light3:#79CDCD;
+--light4:#528B8B;
+--white:#f8ffff;
+}
+
+/* GLOBAL */
+
+body{
+
+font-family:'Montserrat', sans-serif;
+background:#f8ffff;
+color:#2F4F4F;
+line-height:1.7;
+font-size:16px;
+
+max-width:900px;
+margin:auto;
+padding:40px;
+}
+
+/* TITLES */
+
+h1{
+color:#2F4F4F;
+border-bottom:3px solid #8DEEEE;
+padding-bottom:8px;
+}
+
+h2{
+color:#528B8B;
+margin-top:40px;
+}
+
+h3{
+color:#2F4F4F;
+}
+
+/* TABLE OF CONTENTS */
+
+#TOC{
+background:#e9ffff;
+padding:20px;
+border-radius:10px;
+border-left:6px solid #79CDCD;
+}
+
+/* CODE BLOCKS */
+
+pre{
+background:#1f3434;
+color:#f8ffff;
+border-radius:8px;
+padding:15px;
+}
+
+/* INLINE CODE */
+
+code{
+background:#e9ffff;
+color:#2F4F4F;
+padding:3px 6px;
+border-radius:4px;
+}
+
+/* LINKS */
+
+a{
+color:#528B8B;
+font-weight:500;
+}
+
+a:hover{
+color:#2F4F4F;
+}
+
+/* LISTS */
+
+li{
+margin-bottom:6px;
+}
+
+/* BLOCKQUOTES */
+
+blockquote{
+border-left:4px solid #79CDCD;
+padding-left:15px;
+color:#528B8B;
+}
