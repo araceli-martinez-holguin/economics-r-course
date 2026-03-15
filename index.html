@@ -5,13 +5,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Economics R Course</title>
+<title>R Programming for Economists</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
 
-/* COLOR PALETTE */
+/* ------------------ COLOR PALETTE ------------------ */
 
 :root{
 --dark:#2F4F4F;
@@ -22,7 +22,7 @@
 --white:#f8ffff;
 }
 
-/* GLOBAL */
+/* ------------------ GLOBAL ------------------ */
 
 *{
 margin:0;
@@ -38,16 +38,16 @@ line-height:1.6;
 }
 
 .container{
-max-width:950px;
+max-width:1050px;
 margin:auto;
 padding:60px 30px 80px;
 }
 
-/* HEADER */
+/* ------------------ HEADER ------------------ */
 
 header{
 text-align:center;
-margin-bottom:60px;
+margin-bottom:70px;
 }
 
 .eyebrow{
@@ -73,7 +73,7 @@ border-radius:3px;
 }
 
 .repo-link{
-margin-top:12px;
+margin-top:15px;
 font-size:.9rem;
 }
 
@@ -82,109 +82,103 @@ color:var(--light1);
 text-decoration:none;
 }
 
-/* ABOUT */
+/* ------------------ SECTIONS ------------------ */
+
+.section{
+margin-bottom:60px;
+padding:50px;
+border-radius:16px;
+}
+
+.section-dark{
+background:rgba(0,0,0,.18);
+}
+
+.section-light{
+background:#f8ffff;
+color:#2F4F4F;
+}
+
+/* ------------------ TITLES ------------------ */
+
+.section-title{
+font-size:1.7rem;
+font-weight:600;
+margin-bottom:20px;
+position:relative;
+}
+
+.section-title::after{
+content:"";
+display:block;
+width:60px;
+height:3px;
+background:var(--light2);
+margin-top:10px;
+border-radius:3px;
+}
+
+/* ------------------ ABOUT ------------------ */
 
 .about{
-display:flex;
-gap:40px;
+display:grid;
+grid-template-columns:260px 1fr;
+gap:50px;
 align-items:center;
-margin-bottom:70px;
 }
 
 .profile-pic{
-width:220px;
-border-radius:14px;
-box-shadow:0 10px 30px rgba(0,0,0,.4);
-}
-
-.about-text h2{
-font-size:1.6rem;
-margin-bottom:12px;
-font-weight:600;
+width:260px;
+border-radius:18px;
+box-shadow:0 20px 40px rgba(0,0,0,.45);
 }
 
 .about-text p{
-font-size:.95rem;
 margin-bottom:12px;
-opacity:.95;
+}
+
+.links{
+margin-top:10px;
 }
 
 .links a{
-margin-right:16px;
-font-size:.85rem;
+margin-right:15px;
+font-size:.9rem;
 color:var(--light1);
 text-decoration:none;
 }
 
-.links a:hover{
-text-decoration:underline;
+.section-light .links a{
+color:var(--dark);
 }
 
-/* SECTIONS */
+/* ------------------ TOPICS GRID ------------------ */
 
-.section-title{
-font-size:.7rem;
-letter-spacing:.2em;
-text-transform:uppercase;
-opacity:.7;
-margin-bottom:18px;
-}
-
-.course{
-background:rgba(0,0,0,.18);
-padding:30px;
-border-radius:14px;
-margin-bottom:60px;
-}
-
-.course h2{
-font-size:1.5rem;
-margin-bottom:14px;
-}
-
-.course h3{
+.topics-grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px 40px;
 margin-top:20px;
-margin-bottom:10px;
-color:var(--light2);
-font-size:1rem;
 }
 
-.course p{
-margin-bottom:12px;
-font-size:.95rem;
+.topics-grid li{
+list-style:none;
+padding-left:10px;
+border-left:3px solid var(--light2);
 }
 
-.topics{
-margin-left:18px;
-margin-bottom:15px;
-}
-
-.topics li{
-margin-bottom:6px;
-font-size:.9rem;
-}
-
-pre{
-background:#1b2e2e;
-padding:14px;
-border-radius:8px;
-font-size:.85rem;
-overflow-x:auto;
-}
-
-/* LAB CARDS */
+/* ------------------ LAB CARDS ------------------ */
 
 .card-grid{
 display:grid;
 grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
 gap:20px;
-margin-bottom:50px;
 }
 
 .card{
-background:var(--light4);
-padding:26px;
-border-radius:14px;
+background:#406e6e;
+padding:28px;
+border-radius:16px;
 text-decoration:none;
 color:white;
 display:flex;
@@ -200,11 +194,11 @@ box-shadow:0 10px 20px rgba(0,0,0,.35);
 }
 
 .card-icon{
-font-size:1.5rem;
+font-size:1.6rem;
 }
 
 .card-label{
-font-size:.65rem;
+font-size:.7rem;
 letter-spacing:.15em;
 text-transform:uppercase;
 opacity:.8;
@@ -217,29 +211,48 @@ font-size:1.05rem;
 
 .card-sub{
 font-size:.8rem;
-opacity:.85;
+opacity:.9;
 }
 
-/* FOOTER */
+/* ------------------ CODE BLOCKS ------------------ */
+
+pre{
+background:#1b2e2e;
+padding:16px;
+border-radius:10px;
+font-size:.85rem;
+overflow-x:auto;
+margin-top:10px;
+}
+
+.section-light pre{
+background:#e6f5f5;
+}
+
+/* ------------------ FOOTER ------------------ */
 
 footer{
 text-align:center;
 font-size:.8rem;
-opacity:.6;
+opacity:.7;
 margin-top:60px;
 }
 
-/* MOBILE */
+/* ------------------ MOBILE ------------------ */
 
-@media(max-width:720px){
+@media(max-width:750px){
 
 .about{
-flex-direction:column;
+grid-template-columns:1fr;
 text-align:center;
 }
 
 .profile-pic{
-width:180px;
+margin:auto;
+}
+
+.topics-grid{
+grid-template-columns:1fr;
 }
 
 h1{
@@ -264,22 +277,24 @@ font-size:2.4rem;
 <div class="divider"></div>
 
 <p class="repo-link">
-Repository:
 <a href="https://github.com/araceli-martinez-holguin/economics-r-course">
-github.com/araceli-martinez-holguin/economics-r-course
+Course Repository on GitHub
 </a>
 </p>
 
 </header>
 
+<!-- ABOUT -->
 
-<section class="about">
+<section class="section section-dark">
+
+<div class="about">
 
 <img src="Profile-Picture.jpeg" alt="Araceli Martínez-Holguín" class="profile-pic">
 
 <div class="about-text">
 
-<h2>About Me</h2>
+<h2 class="section-title">Instructor</h2>
 
 <p>
 I am <strong>Araceli Martínez-Holguín</strong>, a PhD student in Economics at the
@@ -287,9 +302,9 @@ National Autonomous University of Mexico (UNAM).
 </p>
 
 <p>
-My research explores the relationship between
-<strong>extreme climate events and food prices</strong>, with a broader focus
-on macroeconomics, monetary policy, and sustainable finance.
+My research focuses on the relationship between
+<strong>extreme climate events and food prices</strong>, with a broader interest
+in macroeconomics, monetary policy, and sustainable finance.
 </p>
 
 <p>
@@ -309,84 +324,56 @@ economic data and conduct reproducible empirical analysis.
 
 </div>
 
+</div>
+
 </section>
 
+<!-- COURSE DESCRIPTION -->
 
-<p class="section-title">Course Overview</p>
+<section class="section section-light">
 
-<section class="course">
-
-<p>
-This repository contains <strong>R code, laboratories, datasets, and assignments</strong>
-for the course <strong>Economics Programming with R</strong> taught at the
-School of Economics of the National Autonomous University of Mexico (UNAM).
-</p>
+<h2 class="section-title">Course Overview</h2>
 
 <p>
-The course introduces students to <strong>empirical economic analysis using
-modern data science tools</strong>. Students learn how to clean, visualize,
-and analyze economic datasets while developing reproducible workflows
-using R and RStudio.
+This course introduces students to <strong>empirical economic analysis using R</strong>.
+Students learn how to clean, visualize, and analyze economic datasets while
+developing reproducible research workflows using modern data science tools.
 </p>
 
 <p>
 Laboratories combine programming techniques with applied economic questions
-using datasets from climate databases, agricultural production statistics,
-and macroeconomic indicators.
+using datasets related to climate data, agricultural production, and
+macroeconomic indicators.
 </p>
 
 </section>
 
+<!-- COURSE CONTENT -->
 
-<p class="section-title">Course Information</p>
+<section class="section section-dark">
 
-<section class="course">
+<h2 class="section-title">Topics Covered</h2>
 
-<p>
-<strong>Instructor:</strong> Araceli Martínez Holguín<br>
-<strong>Institution:</strong> School of Economics, UNAM<br>
-<strong>Semester:</strong> February–June 2026
-</p>
-
-<h3>Topics Covered</h3>
-
-<ul class="topics">
+<ul class="topics-grid">
 
 <li>Introduction to R and RStudio</li>
 <li>Data types and data structures</li>
-<li>Data manipulation with dplyr and tidyr</li>
+<li>Data manipulation with dplyr</li>
 <li>Data visualization with ggplot2</li>
+<li>Economic data analysis</li>
 <li>Time series analysis</li>
 <li>Linear regression models</li>
 <li>Economic forecasting</li>
-<li>Causal inference</li>
 
 </ul>
 
 </section>
 
+<!-- LABS -->
 
-<p class="section-title">Software Requirements</p>
+<section class="section section-light">
 
-<section class="course">
-
-<p>Students should install the following software:</p>
-
-<ul class="topics">
-
-<li><a href="https://cran.r-project.org/">R</a></li>
-<li><a href="https://posit.co/download/rstudio-desktop/">RStudio Desktop</a></li>
-
-</ul>
-
-<pre>
-install.packages(c("tidyverse","ggplot2","dplyr","forecast","lmtest"))
-</pre>
-
-</section>
-
-
-<p class="section-title">Laboratories</p>
+<h2 class="section-title">Laboratories</h2>
 
 <div class="card-grid">
 
@@ -402,7 +389,6 @@ install.packages(c("tidyverse","ggplot2","dplyr","forecast","lmtest"))
 
 </a>
 
-
 <a class="card" href="Laboratories/Laboratory-1/Laboratory-1.html">
 
 <div class="card-icon">📊</div>
@@ -417,63 +403,26 @@ install.packages(c("tidyverse","ggplot2","dplyr","forecast","lmtest"))
 
 </div>
 
-
-<p class="section-title">Repository Structure</p>
-
-<section class="course">
-
-<pre>
-economics-r-course/
-
-Laboratories/   Guided R Markdown laboratories
-Assignments/    Student assignments
-Data/           Datasets used in the course
-index.html      Course website
-README.md       Repository documentation
-</pre>
-
 </section>
 
+<!-- HOW TO USE -->
 
-<p class="section-title">Datasets Used</p>
+<section class="section section-dark">
 
-<section class="course">
+<h2 class="section-title">How to Use This Repository</h2>
 
-<ul class="topics">
-
-<li>CRU Climate Data (Climate Research Unit)</li>
-<li>SIAP Agricultural Production Data</li>
-<li>Macroeconomic time series</li>
-
-</ul>
-
-</section>
-
-
-<p class="section-title">How to Use This Repository</p>
-
-<section class="course">
-
-<ol class="topics">
-
-<li>Clone the repository:</li>
-
-</ol>
+<p>Clone the repository:</p>
 
 <pre>
 git clone https://github.com/araceli-martinez-holguin/economics-r-course.git
 </pre>
 
-<ol class="topics" start="2">
-
-<li>Open the project in RStudio</li>
-<li>Navigate to any <strong>Laboratories</strong> folder</li>
-<li>Open the <strong>.Rmd</strong> file and run the code</li>
-
-</ol>
+<p>
+Open the project in RStudio and navigate to any laboratory folder.
+Open the `.Rmd` file and run the code or knit to HTML.
+</p>
 
 </section>
-
 
 <footer>
 
