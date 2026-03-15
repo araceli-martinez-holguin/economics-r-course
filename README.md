@@ -1,8 +1,12 @@
+---
 # R Programming for Economists
 
 **Instructor:** Araceli Martínez Holguín
+
 **Institution:** School of Economics, National Autonomous University of Mexico (UNAM)
+
 **Course:** Economics Programming with R
+
 **Semester:** February–June 2026 (Semester 2026-2)
 
 🌐 **[View Course Website](https://araceli-martinez-holguin.github.io/economics-r-course/)**
