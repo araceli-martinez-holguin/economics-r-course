@@ -1,1 +1,761 @@
+---
+title: "Objetos en R"
+subtitle: "R para economistas"
+author: "Araceli Martínez Holguín"
+date: "February 19, 2026"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    theme: flatly
+    highlight: tango
+    df_print: paged
+    code_folding: show
+  pdf_document:
+    toc: true
+    toc_depth: 3
+    highlight: tango
+---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  comment = "#>"
+)
+```
+
+---
+
+## ¿Por qué aprender R?
+
+R es el lenguaje estándar en economía, estadística y ciencias sociales para analizar datos.
+
+Con R podrás:
+
+- Limpiar y transformar bases de datos (encuestas, registros administrativos, datos del INEGI)
+- Calcular estadísticas descriptivas y hacer pruebas de hipótesis
+- Crear gráficas publicables para tesis, reportes y artículos
+- Automatizar análisis que en Excel tomarían horas
+
+A diferencia de Excel, R guarda un registro exacto de cada paso que hiciste con tus datos,
+lo que hace tu trabajo **reproducible** y **verificable**.
+---
+
+## Parte 1 — Operaciones básicas
+
+R puede usarse directamente como calculadora. Corre cada línea en la consola y observa el resultado.
+
+```{r operaciones-basicas}
+1 + 1
+10 - 3
+4 * 5
+20 / 4
+2 ^ 8      # Potencia: 2 elevado a la 8
+17 %% 5    # Módulo: residuo de dividir 17 entre 5
+```
+
+### El operador de asignación `<-`
+
+En R guardamos resultados en **objetos** usando `<-`.
+
+```{r asignacion}
+mi_suma <- 1 + 1
+mi_suma            # escribir el nombre lo imprime en consola
+print(mi_suma)     # print() hace lo mismo de forma explícita
+```
+
+> **Convención:** en R usamos `<-` para asignar, no `=`.
+> El signo `=` también funciona, pero `<-` es el estándar de la comunidad R.
+
+---
+
+## Parte 2 — Tipos de objetos en R
+
+En R todo lo que creamos es un **objeto**. Cada objeto tiene un tipo (`class`) que determina
+qué operaciones podemos hacer con él.
+
+Usamos `class()` para saber el tipo y `str()` para ver su estructura.
+
+---
+
+### Tipo 1: `numeric` — número decimal
+
+El tipo numérico más común. Se usa para medidas continuas: pesos, temperaturas, distancias, precios.
+
+```{r numeric}
+estatura <- 1.64   # metros
+peso     <- 67     # kilogramos
+imc      <- peso / (estatura ^ 2)
+imc                # Índice de Masa Corporal
+
+class(imc)         # "numeric"
+str(imc)           # num 22.5
+```
+
+---
+
+### Tipo 2: `integer` — número entero
+
+Se usa cuando los valores no tienen decimales. Se escribe con `L` al final.
+
+```{r integer}
+edad    <- 25L
+alumnos <- 30L
+semanas <- 16L
+
+class(edad)        # "integer"
+str(edad)          # int 25
+```
+
+**¿Cuál es la diferencia práctica entre `numeric` e `integer`?**
+
+```{r numeric-vs-integer}
+x_num <- 5    # R lo guarda como decimal: 5.0
+x_int <- 5L   # R lo guarda como entero:  5
+
+class(x_num)      # "numeric"
+class(x_int)      # "integer"
+is.integer(x_num) # FALSE
+is.integer(x_int) # TRUE
+```
+
+En la mayoría de los cálculos se comportan igual, pero `integer` ocupa menos memoria
+(útil cuando trabajas con millones de filas).
+
+---
+
+### Tipo 3: `character` — texto
+
+Se usa para guardar palabras u oraciones. Siempre va entre comillas `" "` o `' '`.
+
+```{r character}
+nombre_est <- "Araceli"
+ciudad     <- "Ciudad de México"
+carrera    <- "Economía"
+
+class(nombre_est)  # "character"
+```
+
+#### Funciones útiles con texto
+
+```{r character-funciones}
+# paste() une cadenas con un espacio entre cada pieza
+presentacion <- paste("Hola, me llamo", nombre_est,
+                      "y estudio", carrera, "en", ciudad)
+print(presentacion)
+
+# paste0() une sin espacios (útil para nombres de archivos)
+archivo <- paste0("reporte_", nombre_est, "_2026.csv")
+print(archivo)
+
+# Otras funciones
+nchar(presentacion)      # Total de caracteres
+toupper(nombre_est)      # MAYÚSCULAS
+tolower(ciudad)          # minúsculas
+substr(carrera, 1, 3)    # Primeras 3 letras: "Eco"
+```
+
+---
+
+### Tipo 4: `logical` — verdadero o falso
+
+Solo tiene dos valores posibles: `TRUE` o `FALSE`.
+Es el resultado de cualquier comparación.
+
+```{r logical}
+aprobado  <- TRUE
+reprobado <- FALSE
+
+class(aprobado)    # "logical"
+```
+
+#### Operadores de comparación
+
+```{r comparaciones}
+10 > 5             # ¿10 mayor que 5?       TRUE
+10 < 5             # ¿10 menor que 5?       FALSE
+10 == 10           # ¿10 igual a 10?        TRUE  (doble ==)
+10 != 5            # ¿10 diferente de 5?    TRUE
+10 >= 10           # ¿10 mayor o igual a 10?TRUE
+10 <= 9            # ¿10 menor o igual a 9? FALSE
+
+calificacion <- 85
+calificacion >= 60  # ¿Aprobó?  -> TRUE
+calificacion >= 90  # ¿Sacó A?  -> FALSE
+```
+
+> **Truco útil:** `TRUE` vale 1 y `FALSE` vale 0 en cálculos numéricos.
+
+```{r logical-aritmetica}
+sum(TRUE, TRUE, FALSE, TRUE)                    # 3 "verdaderos"
+mean(c(TRUE, FALSE, TRUE, TRUE, FALSE))         # 0.6 = 60% son TRUE
+```
+
+---
+
+### Tipo 5: `vector` — múltiples valores del mismo tipo
+
+Un vector guarda varios valores en una sola variable con `c()` (*combine*).
+Todos los elementos deben ser del mismo tipo.
+
+```{r vector}
+# Vector de caracteres
+palabras <- c("Me", "gusta", "mi", "clase", "de", "R")
+str(palabras)       # chr [1:6]
+length(palabras)    # 6 elementos
+
+# Vector numérico
+calificaciones <- c(78, 85, 92, 67, 90, 88)
+mean(calificaciones)  # Promedio: 83.3
+max(calificaciones)   # Máximo:   92
+min(calificaciones)   # Mínimo:   67
+range(calificaciones) # Rango:    67 92
+```
+
+#### Acceder a elementos por posición
+
+> **Importante:** en R los índices empiezan en **1**, no en 0 como en Python.
+
+```{r vector-indexing}
+calificaciones[1]    # Primer elemento:  78
+calificaciones[3]    # Tercer elemento:  92
+calificaciones[2:4]  # Del segundo al cuarto: 85 92 67
+```
+
+#### Secuencias rápidas con `:`
+
+```{r vector-secuencia}
+dias <- 1L:7L
+str(dias)    # int [1:7] 1 2 3 4 5 6 7
+print(dias)
+```
+
+---
+
+### Tipo 6: `factor` — variable categórica
+
+Un factor es como un `character` pero con categorías fijas llamadas **levels**.
+Es ideal para variables como nivel educativo, región, género o carrera.
+
+```{r factor}
+nivel_edu <- factor(c("Licenciatura", "Maestria", "Doctorado",
+                      "Licenciatura", "Maestria", "Maestria"))
+print(nivel_edu)
+levels(nivel_edu)   # Categorías disponibles
+table(nivel_edu)    # Frecuencia de cada categoría
+```
+
+#### Factor ordenado (variable ordinal)
+
+Cuando las categorías tienen jerarquía, usamos `ordered = TRUE`:
+
+```{r factor-ordenado}
+satisfaccion <- factor(
+  c("Alto", "Medio", "Bajo", "Alto", "Bajo"),
+  levels  = c("Bajo", "Medio", "Alto"),
+  ordered = TRUE
+)
+print(satisfaccion)
+satisfaccion[1] > satisfaccion[3]   # ¿Alto > Bajo? -> TRUE
+```
+
+---
+
+### Tipo 7: `data.frame` — tabla de datos
+
+El objeto más usado en análisis de datos. Piénsalo como una hoja de Excel:
+**filas = observaciones**, **columnas = variables**.
+Cada columna puede ser de un tipo diferente.
+
+```{r dataframe}
+estudiantes <- data.frame(
+  nombre       = c("Ana", "Luis", "Maria", "Carlos", "Sofia", "Pedro"),
+  edad         = c(22L, 25L, 21L, 23L, 20L, 24L),
+  calificacion = c(90.5, 58.0, 95.3, 82.1, 47.6, 76.4),
+  carrera      = factor(c("Economia", "Derecho", "Economia",
+                          "Derecho", "Economia", "Derecho")),
+  aprobado     = c(TRUE, FALSE, TRUE, TRUE, FALSE, TRUE)
+)
+
+print(estudiantes)
+```
+
+#### Explorar la estructura
+
+```{r dataframe-estructura}
+str(estudiantes)       # Tipo de cada columna
+nrow(estudiantes)      # Número de filas
+ncol(estudiantes)      # Número de columnas
+dim(estudiantes)       # Dimensiones: 6 x 5
+summary(estudiantes)   # Resumen estadístico
+```
+
+#### Acceder a columnas con `$`
+
+```{r dataframe-acceso}
+estudiantes$nombre
+estudiantes$calificacion
+
+mean(estudiantes$calificacion)  # Promedio general
+max(estudiantes$calificacion)   # Calificación más alta
+```
+
+#### Filtrar filas
+
+```{r dataframe-filtros}
+# Solo estudiantes aprobados
+estudiantes[estudiantes$aprobado == TRUE, ]
+
+# Solo estudiantes de Economía
+estudiantes[estudiantes$carrera == "Economia", ]
+```
+
+#### Agregar una nueva columna
+
+```{r dataframe-nueva-col}
+estudiantes$beca <- estudiantes$calificacion >= 85
+print(estudiantes)
+```
+
+---
+
+## Parte 3 — Errores comunes y cómo evitarlos
+
+Estos son los errores que casi todos los principiantes cometen.
+Léelos con atención para ahorrar tiempo y frustración.
+
+### Error 1: Olvidar las comillas en un `character`
+
+```{r error1, eval=FALSE}
+# ✗ R buscará un objeto llamado "hola" y dará error:
+texto <- hola
+
+# ✓ correcto:
+texto <- "hola"
+```
+
+### Error 2: Confundir `==` (comparar) con `=` (asignar)
+
+```{r error2, eval=FALSE}
+x <- 10
+
+# ✗ esto intenta asignar, no comparar:
+if (x = 5) { ... }
+
+# ✓ correcto:
+if (x == 5) { ... }
+```
+
+### Error 3: Usar `c` como nombre de objeto
+
+```{r error3, eval=FALSE}
+# ✗ peligroso — "c" también es el nombre de la función c():
+c <- 10
+c(1, 2, 3)   # ahora "c" es 10, no la función → ERROR
+
+# ✓ usa nombres descriptivos:
+conteo <- 10
+```
+
+### Error 4: Índices fuera de rango
+
+```{r error4, eval=FALSE}
+# calificaciones tiene 6 elementos (índices del 1 al 6)
+calificaciones[10]   # devuelve NA — bug silencioso
+
+# ✓ siempre verifica con length() antes de indexar:
+length(calificaciones)   # 6 → máximo índice permitido es 6
+```
+
+### Error 5: Mayúsculas y minúsculas importan
+
+```{r error5, eval=FALSE}
+Nombre <- "Ana"
+print(nombre)   # Error: object 'nombre' not found
+                # "Nombre" y "nombre" son dos objetos distintos
+```
+
+### Error 6: Usar `=` en vez de `<-` para asignar *(estilo)*
+
+```{r error6, eval=FALSE}
+# Funciona, pero no es la convención en R:
+x = 5
+
+# ✓ convención estándar de la comunidad R:
+x <- 5
+```
+
+---
+
+## Parte 4 — El loop `for`
+
+Un `for` repite el mismo bloque de código para cada elemento de una secuencia.
+Evita copiar y pegar el mismo código muchas veces.
+
+**Estructura:**
+
+```r
+for (variable_temporal in secuencia) {
+    código que se repite en cada vuelta
+}
+```
+
+### Ejemplo 1: números del 1 al 5
+
+```{r for-basico}
+for (i in 1:5) {
+  cat("Vuelta número:", i, "\n")
+}
+```
+
+### Ejemplo 2: recorrer un vector de nombres
+
+```{r for-nombres}
+personas <- c("Ana", "Luis", "Maria", "Pedro", "Sandra")
+
+for (persona in personas) {
+  cat("Hola,", persona, "! Bienvenid@ a la clase de R.\n")
+}
+```
+
+### Ejemplo 3: acceder a dos vectores al mismo tiempo con índice
+
+```{r for-indice}
+asignaturas <- c("Estadística", "Programación", "Bases de Datos")
+notas       <- c(9.5, 8.0, 9.0)
+
+for (i in 1:length(asignaturas)) {
+  cat(asignaturas[i], "->", notas[i], "\n")
+}
+```
+
+### Ejemplo 4: `for` + `if/else`
+
+```{r for-ifelse}
+for (i in 1:length(asignaturas)) {
+  if (notas[i] >= 9) {
+    cat(asignaturas[i], ": EXCELENTE (", notas[i], ")\n")
+  } else {
+    cat(asignaturas[i], ": BUENO     (", notas[i], ")\n")
+  }
+}
+```
+
+---
+
+## Parte 5 — Ejercicio 1: tipos de objetos y `paste0()`
+
+**Instrucciones:**
+
+Crea 5 objetos con nombres descriptivos:
+
+- `frase_base`: un `character` con el texto `"Me gusta correr"`
+- `km_mes`: un `integer` con el valor `100`
+- `horas_dia`: un `numeric` con el valor `1.5`
+- `horas_dos_dias`: la suma de `horas_dia + horas_dia`
+- `oracion`: una oración con sentido usando `paste0()` y los 4 objetos anteriores
+
+Imprime `oracion` y verifica el tipo de cada objeto con `class()`.
+
+> **Intenta resolverlo antes de ver la solución.**
+
+```{r ejercicio1-espacio}
+# --- TU CÓDIGO AQUÍ ---
+
+
+```
+
+<details>
+<summary>**Ver solución**</summary>
+
+```{r ejercicio1-solucion}
+frase_base     <- "Me gusta correr"   # character
+km_mes         <- 100L                # integer
+horas_dia      <- 1.5                 # numeric
+horas_dos_dias <- horas_dia + horas_dia  # numeric: 1.5 + 1.5 = 3
+
+oracion <- paste0(
+  frase_base, " ", km_mes,
+  " km al mes; en promedio corro ", horas_dia,
+  " horas al dia, es decir, ", horas_dos_dias,
+  " horas cada 2 dias."
+)
+
+print(oracion)
+
+cat("\nTipos de los objetos:\n")
+cat("frase_base    :", class(frase_base),     "\n")
+cat("km_mes        :", class(km_mes),         "\n")
+cat("horas_dia     :", class(horas_dia),      "\n")
+cat("horas_dos_dias:", class(horas_dos_dias), "\n")
+cat("oracion       :", class(oracion),        "\n")
+```
+
+</details>
+
+---
+
+## Parte 6 — Ejercicio 2: vectores y estadísticas
+
+**Instrucciones:**
+
+1. Crea `vec_pares`: los números pares del 1 al 10
+2. Crea `vec_enteros`: los enteros del 1 al 100
+3. Calcula la media y la suma de ambos vectores
+4. Calcula las tres operaciones indicadas
+
+> **Pista:** para generar una secuencia rápida usa `:` (ej. `1:10`)
+
+```{r ejercicio2-espacio}
+# --- TU CÓDIGO AQUÍ ---
+
+
+```
+
+<details>
+<summary>**Ver solución**</summary>
+
+```{r ejercicio2-solucion}
+vec_pares   <- c(2, 4, 6, 8, 10)   # números pares del 1 al 10
+vec_enteros <- 1:100                # enteros del 1 al 100
+
+media_pares   <- mean(vec_pares)
+suma_pares    <- sum(vec_pares)
+media_enteros <- mean(vec_enteros)
+suma_enteros  <- sum(vec_enteros)
+
+cat("vec_pares   -> Media:", media_pares,   "| Suma:", suma_pares,   "\n")
+cat("vec_enteros -> Media:", media_enteros, "| Suma:", suma_enteros, "\n")
+
+resultado1 <- suma_pares   * media_pares      # Suma × Media de vec_pares
+resultado2 <- suma_enteros - media_enteros    # Suma − Media de vec_enteros
+resultado3 <- suma_enteros / suma_pares       # Suma enteros / Suma pares
+
+cat("\nOperaciones:\n")
+cat("suma_pares × media_pares      :", resultado1, "\n")
+cat("suma_enteros − media_enteros  :", resultado2, "\n")
+cat("suma_enteros / suma_pares     :", resultado3, "\n")
+```
+
+</details>
+
+### Visualización rápida
+
+Con R Markdown podemos mostrar gráficas directamente en el documento,
+sin necesidad de guardar archivos PNG por separado.
+
+```{r ejercicio2-graficas, fig.width=10, fig.height=4}
+vec_pares   <- c(2, 4, 6, 8, 10)
+vec_enteros <- 1:100
+media_pares   <- mean(vec_pares)
+media_enteros <- mean(vec_enteros)
+
+par(mfrow = c(1, 3), mar = c(4, 4, 3, 1))
+
+# Barras de vec_pares
+barplot(vec_pares,
+        names.arg = paste0("v", 1:5),
+        col = "darkslategray", border = "white",
+        main = "Vec_pares",
+        xlab = "Elemento", ylab = "Valor", ylim = c(0, 13))
+abline(h = media_pares, col = "tomato", lwd = 2, lty = 2)
+
+# Histograma de vec_pares
+hist(vec_pares, col = "#C1FFC1", border = "white",
+     main = "Distribución vec_pares",
+     xlab = "Valores", ylab = "Frecuencia", breaks = 5)
+abline(v = media_pares, col = "tomato", lwd = 2, lty = 2)
+
+# Línea de vec_enteros
+plot(vec_enteros, type = "l", col = "#E87B4C", lwd = 2,
+     main = "Vec_enteros (1 a 100)",
+     xlab = "Índice", ylab = "Valor")
+abline(h = media_enteros, col = "darkred", lwd = 2, lty = 2)
+
+par(mfrow = c(1, 1))
+```
+
+---
+
+## Parte 7 — Ejercicio 3: escribe tu propio `for`
+
+**Instrucciones:**
+
+Tienes las calificaciones de 5 estudiantes. Escribe un `for` que recorra
+la lista e imprima para cada uno:
+
+- Si `calificacion >= 60`: `"Nombre obtuvo X -> APROBADO"`
+- Si `calificacion <  60`: `"Nombre obtuvo X -> REPROBADO"`
+
+**Datos:**
+
+```{r ejercicio3-datos}
+nombres_est <- c("Ana", "Juan", "Maria", "Pedro", "Sofia")
+califs      <- c(85, 45, 92, 58, 76)
+```
+
+**Estructura de ayuda:**
+
+```r
+for (i in 1:length(nombres_est)) {
+  if (califs[i] >= 60) {
+    cat(...)   # APROBADO
+  } else {
+    cat(...)   # REPROBADO
+  }
+}
+```
+
+```{r ejercicio3-espacio}
+# --- TU CÓDIGO AQUÍ ---
+
+
+```
+
+<details>
+<summary>**Ver solución**</summary>
+
+```{r ejercicio3-solucion}
+for (i in 1:length(nombres_est)) {
+  if (califs[i] >= 60) {
+    cat(nombres_est[i], "obtuvo", califs[i], "-> APROBADO\n")
+  } else {
+    cat(nombres_est[i], "obtuvo", califs[i], "-> REPROBADO\n")
+  }
+}
+```
+
+</details>
+
+---
+
+## Parte 8 — Proyecto integrador
+
+Pon en práctica todo lo aprendido: tipos de objetos, `data.frame`,
+estadísticas, `for` y gráficas.
+
+**Contexto:** eres el coordinador académico de una carrera con 8 estudiantes.
+Tienes sus datos del semestre y necesitas generar un reporte completo.
+
+### Paso 1: Crear el `data.frame`
+
+```{r proyecto-datos}
+grupo <- data.frame(
+  nombre       = c("Ana", "Luis", "Maria", "Carlos",
+                   "Sofia", "Pedro", "Elena", "Jorge"),
+  edad         = c(22L, 25L, 21L, 23L, 20L, 24L, 22L, 21L),
+  calificacion = c(90.5, 58.0, 95.3, 82.1, 47.6, 76.4, 88.0, 63.5),
+  carrera      = factor(c("Economia", "Derecho", "Economia", "Derecho",
+                          "Economia", "Derecho", "Economia", "Derecho")),
+  semestre     = c(4L, 6L, 2L, 8L, 2L, 4L, 6L, 8L)
+)
+
+print(grupo)
+```
+
+### Paso 2: Estadísticas del grupo
+
+```{r proyecto-estadisticas}
+promedio_grupo <- mean(grupo$calificacion)
+mejor_nota     <- max(grupo$calificacion)
+peor_nota      <- min(grupo$calificacion)
+num_aprobados  <- sum(grupo$calificacion >= 60)
+num_reprobados <- sum(grupo$calificacion <  60)
+
+cat("Promedio del grupo  :", round(promedio_grupo, 2), "\n")
+cat("Calificación más alta:", mejor_nota, "\n")
+cat("Calificación más baja:", peor_nota,  "\n")
+cat("Aprobados  :", num_aprobados,  "de", nrow(grupo), "\n")
+cat("Reprobados :", num_reprobados, "de", nrow(grupo), "\n")
+```
+
+### Paso 3: Reporte individual con `for`
+
+```{r proyecto-reporte}
+cat("====== Reporte individual ======\n")
+
+for (i in 1:nrow(grupo)) {
+
+  nom <- grupo$nombre[i]
+  cal <- grupo$calificacion[i]
+  car <- as.character(grupo$carrera[i])
+  sem <- grupo$semestre[i]
+
+  estado  <- if (cal >= 60) "APROBADO" else "REPROBADO"
+  mencion <- if (cal >= 90) "** Mención Honorífica **" else ""
+
+  cat(nom, "|", car, "| Semestre", sem,
+      "| Calificación:", cal, "|", estado, mencion, "\n")
+}
+```
+
+### Paso 4: Gráfica de calificaciones
+
+En R Markdown la gráfica aparece directamente en el documento — no necesitamos `png()` ni `dev.off()`.
+
+```{r proyecto-grafica, fig.width=8, fig.height=5}
+orden   <- order(grupo$calificacion, decreasing = TRUE)
+cal_ord <- grupo$calificacion[orden]
+nom_ord <- grupo$nombre[orden]
+colores <- ifelse(cal_ord >= 60, "#4CAF50", "#E57373")
+
+par(mar = c(5, 6, 4, 2))
+
+barplot(
+  cal_ord,
+  names.arg = nom_ord,
+  col       = colores,
+  border    = "white",
+  main      = "Calificaciones del Grupo — Semestre 2026",
+  xlab      = "Estudiante",
+  ylab      = "Calificación",
+  ylim      = c(0, 110),
+  las       = 1
+)
+
+abline(h = 60,             col = "red",  lwd = 2, lty = 2)
+abline(h = promedio_grupo, col = "blue", lwd = 2, lty = 3)
+
+legend(
+  "topright",
+  legend = c("Aprobado", "Reprobado",
+             "Mín. aprobatoria (60)",
+             paste0("Promedio (", round(promedio_grupo, 1), ")")),
+  fill   = c("#4CAF50", "#E57373", NA, NA),
+  lty    = c(NA, NA, 2, 3),
+  col    = c(NA, NA, "red", "blue"),
+  lwd    = c(NA, NA, 2, 2),
+  border = NA,
+  bty    = "n"
+)
+```
+
+---
+
+## Resumen de la clase
+
+| Tipo       | Ejemplo              | `class()`     | Uso típico                        |
+|------------|----------------------|---------------|-----------------------------------|
+| `numeric`  | `1.64`               | `"numeric"`   | Medidas continuas                 |
+| `integer`  | `25L`                | `"integer"`   | Conteos, índices                  |
+| `character`| `"Economía"`         | `"character"` | Texto, etiquetas                  |
+| `logical`  | `TRUE`               | `"logical"`   | Condiciones, filtros              |
+| `vector`   | `c(78, 85, 92)`      | tipo base     | Series de valores del mismo tipo  |
+| `factor`   | `factor(c(...))`     | `"factor"`    | Variables categóricas             |
+| `data.frame`| `data.frame(...)`   | `"data.frame"`| Tablas de datos (lo más usado)    |
+
+---
+
+## Para la próxima clase
+
+Practica estos conceptos con datos propios:
+
+1. Crea un `data.frame` con información de 5 personas que conozcas
+   (nombre, edad, ciudad, una variable numérica de tu elección)
+2. Calcula la media y el máximo de tu variable numérica
+3. Usa un `for` para imprimir una oración sobre cada persona
+
+---
