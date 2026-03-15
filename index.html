@@ -31,7 +31,6 @@ box-sizing:border-box;
 }
 
 body{
-
 font-family:'Montserrat',sans-serif;
 background:linear-gradient(160deg,#2F4F4F,#1f3434);
 color:var(--white);
@@ -39,7 +38,6 @@ line-height:1.6;
 }
 
 .container{
-
 max-width:950px;
 margin:auto;
 padding:60px 30px 80px;
@@ -48,13 +46,11 @@ padding:60px 30px 80px;
 /* HEADER */
 
 header{
-
 text-align:center;
 margin-bottom:60px;
 }
 
 .eyebrow{
-
 letter-spacing:.25em;
 text-transform:uppercase;
 font-size:.75rem;
@@ -63,14 +59,12 @@ margin-bottom:14px;
 }
 
 h1{
-
 font-size:3rem;
 font-weight:600;
 margin-bottom:10px;
 }
 
 .divider{
-
 width:70px;
 height:3px;
 background:var(--light2);
@@ -78,10 +72,19 @@ margin:15px auto 0;
 border-radius:3px;
 }
 
+.repo-link{
+margin-top:12px;
+font-size:.9rem;
+}
+
+.repo-link a{
+color:var(--light1);
+text-decoration:none;
+}
+
 /* ABOUT */
 
 .about{
-
 display:flex;
 gap:40px;
 align-items:center;
@@ -89,28 +92,24 @@ margin-bottom:70px;
 }
 
 .profile-pic{
-
 width:220px;
 border-radius:14px;
 box-shadow:0 10px 30px rgba(0,0,0,.4);
 }
 
 .about-text h2{
-
 font-size:1.6rem;
 margin-bottom:12px;
 font-weight:600;
 }
 
 .about-text p{
-
 font-size:.95rem;
 margin-bottom:12px;
 opacity:.95;
 }
 
 .links a{
-
 margin-right:16px;
 font-size:.85rem;
 color:var(--light1);
@@ -118,14 +117,12 @@ text-decoration:none;
 }
 
 .links a:hover{
-
 text-decoration:underline;
 }
 
-/* COURSE SECTION */
+/* SECTIONS */
 
 .section-title{
-
 font-size:.7rem;
 letter-spacing:.2em;
 text-transform:uppercase;
@@ -134,7 +131,6 @@ margin-bottom:18px;
 }
 
 .course{
-
 background:rgba(0,0,0,.18);
 padding:30px;
 border-radius:14px;
@@ -142,13 +138,11 @@ margin-bottom:60px;
 }
 
 .course h2{
-
 font-size:1.5rem;
 margin-bottom:14px;
 }
 
 .course h3{
-
 margin-top:20px;
 margin-bottom:10px;
 color:var(--light2);
@@ -156,25 +150,21 @@ font-size:1rem;
 }
 
 .course p{
-
 margin-bottom:12px;
 font-size:.95rem;
 }
 
 .topics{
-
 margin-left:18px;
 margin-bottom:15px;
 }
 
 .topics li{
-
 margin-bottom:6px;
 font-size:.9rem;
 }
 
 pre{
-
 background:#1b2e2e;
 padding:14px;
 border-radius:8px;
@@ -185,7 +175,6 @@ overflow-x:auto;
 /* LAB CARDS */
 
 .card-grid{
-
 display:grid;
 grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
 gap:20px;
@@ -193,7 +182,6 @@ margin-bottom:50px;
 }
 
 .card{
-
 background:var(--light4);
 padding:26px;
 border-radius:14px;
@@ -206,18 +194,16 @@ transition:.25s;
 }
 
 .card:hover{
-
-transform:translateY(-4px);
+transform:translateY(-6px);
 background:var(--light3);
+box-shadow:0 10px 20px rgba(0,0,0,.35);
 }
 
 .card-icon{
-
 font-size:1.5rem;
 }
 
 .card-label{
-
 font-size:.65rem;
 letter-spacing:.15em;
 text-transform:uppercase;
@@ -225,13 +211,11 @@ opacity:.8;
 }
 
 .card-title{
-
 font-weight:600;
 font-size:1.05rem;
 }
 
 .card-sub{
-
 font-size:.8rem;
 opacity:.85;
 }
@@ -239,7 +223,6 @@ opacity:.85;
 /* FOOTER */
 
 footer{
-
 text-align:center;
 font-size:.8rem;
 opacity:.6;
@@ -251,18 +234,15 @@ margin-top:60px;
 @media(max-width:720px){
 
 .about{
-
 flex-direction:column;
 text-align:center;
 }
 
 .profile-pic{
-
 width:180px;
 }
 
 h1{
-
 font-size:2.4rem;
 }
 
@@ -279,9 +259,16 @@ font-size:2.4rem;
 
 <p class="eyebrow">UNAM · School of Economics</p>
 
-<h1>Economics R Course</h1>
+<h1>R Programming for Economists</h1>
 
 <div class="divider"></div>
+
+<p class="repo-link">
+Repository:
+<a href="https://github.com/araceli-martinez-holguin/economics-r-course">
+github.com/araceli-martinez-holguin/economics-r-course
+</a>
+</p>
 
 </header>
 
@@ -306,8 +293,8 @@ on macroeconomics, monetary policy, and sustainable finance.
 </p>
 
 <p>
-I currently teach <strong>Statistical Programming with R</strong>. This repository
-contains the laboratories, assignments, and datasets used in the course.
+In this course I teach students how to use <strong>R</strong> to work with
+economic data and conduct reproducible empirical analysis.
 </p>
 
 <div class="links">
@@ -325,23 +312,40 @@ contains the laboratories, assignments, and datasets used in the course.
 </section>
 
 
+<p class="section-title">Course Overview</p>
+
+<section class="course">
+
+<p>
+This repository contains <strong>R code, laboratories, datasets, and assignments</strong>
+for the course <strong>Economics Programming with R</strong> taught at the
+School of Economics of the National Autonomous University of Mexico (UNAM).
+</p>
+
+<p>
+The course introduces students to <strong>empirical economic analysis using
+modern data science tools</strong>. Students learn how to clean, visualize,
+and analyze economic datasets while developing reproducible workflows
+using R and RStudio.
+</p>
+
+<p>
+Laboratories combine programming techniques with applied economic questions
+using datasets from climate databases, agricultural production statistics,
+and macroeconomic indicators.
+</p>
+
+</section>
+
+
 <p class="section-title">Course Information</p>
 
 <section class="course">
 
-<h2>R Programming for Economists</h2>
-
 <p>
 <strong>Instructor:</strong> Araceli Martínez Holguín<br>
-<strong>Institution:</strong> School of Economics, National Autonomous University of Mexico (UNAM)<br>
+<strong>Institution:</strong> School of Economics, UNAM<br>
 <strong>Semester:</strong> February–June 2026
-</p>
-
-<p>
-This course introduces economics students to data analysis,
-visualization, and econometric modeling using R and RStudio.
-Students learn to manipulate economic datasets, produce visualizations,
-and estimate statistical models used in applied economic research.
 </p>
 
 <h3>Topics Covered</h3>
@@ -349,9 +353,9 @@ and estimate statistical models used in applied economic research.
 <ul class="topics">
 
 <li>Introduction to R and RStudio</li>
-<li>Data types and structures</li>
+<li>Data types and data structures</li>
 <li>Data manipulation with dplyr and tidyr</li>
-<li>Visualization with ggplot2</li>
+<li>Data visualization with ggplot2</li>
 <li>Time series analysis</li>
 <li>Linear regression models</li>
 <li>Economic forecasting</li>
@@ -359,12 +363,19 @@ and estimate statistical models used in applied economic research.
 
 </ul>
 
-<h3>Required Software</h3>
+</section>
+
+
+<p class="section-title">Software Requirements</p>
+
+<section class="course">
+
+<p>Students should install the following software:</p>
 
 <ul class="topics">
 
-<li>R (version 4.0+)</li>
-<li>RStudio</li>
+<li><a href="https://cran.r-project.org/">R</a></li>
+<li><a href="https://posit.co/download/rstudio-desktop/">RStudio Desktop</a></li>
 
 </ul>
 
@@ -384,13 +395,9 @@ install.packages(c("tidyverse","ggplot2","dplyr","forecast","lmtest"))
 <div class="card-icon">🔬</div>
 
 <div>
-
 <div class="card-label">Lab 00</div>
-
-<div class="card-title">Laboratory 0</div>
-
-<div class="card-sub">Types of objects in R</div>
-
+<div class="card-title">Types of Objects in R</div>
+<div class="card-sub">Introduction to R data structures</div>
 </div>
 
 </a>
@@ -401,18 +408,71 @@ install.packages(c("tidyverse","ggplot2","dplyr","forecast","lmtest"))
 <div class="card-icon">📊</div>
 
 <div>
-
 <div class="card-label">Lab 01</div>
-
-<div class="card-title">Laboratory 1</div>
-
-<div class="card-sub">Data structures & analysis</div>
-
+<div class="card-title">Data Structures & Analysis</div>
+<div class="card-sub">Working with real datasets</div>
 </div>
 
 </a>
 
 </div>
+
+
+<p class="section-title">Repository Structure</p>
+
+<section class="course">
+
+<pre>
+economics-r-course/
+
+Laboratories/   Guided R Markdown laboratories
+Assignments/    Student assignments
+Data/           Datasets used in the course
+index.html      Course website
+README.md       Repository documentation
+</pre>
+
+</section>
+
+
+<p class="section-title">Datasets Used</p>
+
+<section class="course">
+
+<ul class="topics">
+
+<li>CRU Climate Data (Climate Research Unit)</li>
+<li>SIAP Agricultural Production Data</li>
+<li>Macroeconomic time series</li>
+
+</ul>
+
+</section>
+
+
+<p class="section-title">How to Use This Repository</p>
+
+<section class="course">
+
+<ol class="topics">
+
+<li>Clone the repository:</li>
+
+</ol>
+
+<pre>
+git clone https://github.com/araceli-martinez-holguin/economics-r-course.git
+</pre>
+
+<ol class="topics" start="2">
+
+<li>Open the project in RStudio</li>
+<li>Navigate to any <strong>Laboratories</strong> folder</li>
+<li>Open the <strong>.Rmd</strong> file and run the code</li>
+
+</ol>
+
+</section>
 
 
 <footer>
