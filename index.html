@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 
@@ -11,7 +12,7 @@
 
 <style>
 
-/* ------------------ COLOR PALETTE ------------------ */
+/* ---------------- COLOR PALETTE ---------------- */
 
 :root{
 --dark:#2F4F4F;
@@ -22,7 +23,7 @@
 --white:#f8ffff;
 }
 
-/* ------------------ GLOBAL ------------------ */
+/* ---------------- GLOBAL ---------------- */
 
 *{
 margin:0;
@@ -40,53 +41,68 @@ line-height:1.6;
 .container{
 max-width:1050px;
 margin:auto;
-padding:60px 30px 80px;
+padding:40px 30px 80px;
 }
 
-/* ------------------ HEADER ------------------ */
+/* ---------------- HERO ---------------- */
 
-header{
+.hero{
 text-align:center;
+padding:90px 40px;
 margin-bottom:70px;
+background:linear-gradient(160deg,#2F4F4F,#406e6e);
+border-radius:20px;
+box-shadow:0 25px 60px rgba(0,0,0,.4);
 }
 
-.eyebrow{
-letter-spacing:.25em;
-text-transform:uppercase;
-font-size:.75rem;
-opacity:.8;
-margin-bottom:14px;
-}
-
-h1{
+.hero h1{
 font-size:3rem;
-font-weight:600;
-margin-bottom:10px;
+margin-bottom:15px;
 }
 
-.divider{
-width:70px;
-height:3px;
-background:var(--light2);
-margin:15px auto 0;
-border-radius:3px;
+.hero p{
+font-size:1.1rem;
+opacity:.9;
+max-width:650px;
+margin:auto;
+margin-bottom:25px;
 }
 
-.repo-link{
-margin-top:15px;
-font-size:.9rem;
+.hero-buttons{
+display:flex;
+justify-content:center;
+gap:20px;
+margin-top:25px;
 }
 
-.repo-link a{
-color:var(--light1);
+.hero-buttons a{
 text-decoration:none;
+padding:12px 22px;
+border-radius:8px;
+font-size:.9rem;
+font-weight:500;
+transition:.2s;
 }
 
-/* ------------------ SECTIONS ------------------ */
+.button-primary{
+background:var(--light2);
+color:#2F4F4F;
+}
+
+.button-secondary{
+border:1px solid var(--light2);
+color:var(--light2);
+}
+
+.hero-buttons a:hover{
+transform:translateY(-2px);
+}
+
+/* ---------------- SECTIONS ---------------- */
 
 .section{
 margin-bottom:60px;
-padding:50px;
+padding:55px;
 border-radius:16px;
 }
 
@@ -99,12 +115,12 @@ background:#f8ffff;
 color:#2F4F4F;
 }
 
-/* ------------------ TITLES ------------------ */
+/* ---------------- TITLES ---------------- */
 
 .section-title{
 font-size:1.7rem;
 font-weight:600;
-margin-bottom:20px;
+margin-bottom:25px;
 position:relative;
 }
 
@@ -118,7 +134,7 @@ margin-top:10px;
 border-radius:3px;
 }
 
-/* ------------------ ABOUT ------------------ */
+/* ---------------- ABOUT ---------------- */
 
 .about{
 display:grid;
@@ -138,7 +154,7 @@ margin-bottom:12px;
 }
 
 .links{
-margin-top:10px;
+margin-top:12px;
 }
 
 .links a{
@@ -152,7 +168,7 @@ text-decoration:none;
 color:var(--dark);
 }
 
-/* ------------------ TOPICS GRID ------------------ */
+/* ---------------- TOPICS GRID ---------------- */
 
 .topics-grid{
 display:grid;
@@ -167,7 +183,39 @@ padding-left:10px;
 border-left:3px solid var(--light2);
 }
 
-/* ------------------ LAB CARDS ------------------ */
+/* ---------------- ROADMAP ---------------- */
+
+.roadmap{
+display:flex;
+flex-direction:column;
+gap:25px;
+margin-top:20px;
+}
+
+.step{
+display:flex;
+gap:18px;
+align-items:flex-start;
+}
+
+.step-number{
+background:var(--light2);
+color:#2F4F4F;
+font-weight:600;
+border-radius:50%;
+width:36px;
+height:36px;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:.9rem;
+}
+
+.step-text{
+max-width:600px;
+}
+
+/* ---------------- LAB CARDS ---------------- */
 
 .card-grid{
 display:grid;
@@ -214,7 +262,7 @@ font-size:.8rem;
 opacity:.9;
 }
 
-/* ------------------ CODE BLOCKS ------------------ */
+/* ---------------- CODE BLOCK ---------------- */
 
 pre{
 background:#1b2e2e;
@@ -229,7 +277,7 @@ margin-top:10px;
 background:#e6f5f5;
 }
 
-/* ------------------ FOOTER ------------------ */
+/* ---------------- FOOTER ---------------- */
 
 footer{
 text-align:center;
@@ -238,9 +286,13 @@ opacity:.7;
 margin-top:60px;
 }
 
-/* ------------------ MOBILE ------------------ */
+/* ---------------- MOBILE ---------------- */
 
 @media(max-width:750px){
+
+.hero h1{
+font-size:2.2rem;
+}
 
 .about{
 grid-template-columns:1fr;
@@ -255,70 +307,79 @@ margin:auto;
 grid-template-columns:1fr;
 }
 
-h1{
-font-size:2.4rem;
+.hero-buttons{
+flex-direction:column;
 }
 
 }
 
 </style>
+
 </head>
 
 <body>
 
 <div class="container">
 
-<header>
+<!-- HERO -->
 
-<p class="eyebrow">UNAM · School of Economics</p>
+<section class="hero">
 
 <h1>R Programming for Economists</h1>
 
-<div class="divider"></div>
-
-<p class="repo-link">
-<a href="https://github.com/araceli-martinez-holguin/economics-r-course">
-Course Repository on GitHub
-</a>
+<p>
+Empirical economic analysis with R.  
+A course on data analysis, visualization, and reproducible research
+for students at the UNAM School of Economics.
 </p>
 
-</header>
+<div class="hero-buttons">
 
-<!-- ABOUT -->
+<a class="button-primary" href="#labs">
+View Laboratories
+</a>
+
+<a class="button-secondary"
+href="https://github.com/araceli-martinez-holguin/economics-r-course">
+GitHub Repository </a>
+
+</div>
+
+</section>
+
+<!-- INSTRUCTOR -->
 
 <section class="section section-dark">
 
 <div class="about">
 
-<img src="Profile-Picture.jpeg" alt="Araceli Martínez-Holguín" class="profile-pic">
+<img src="Profile-Picture.jpeg" class="profile-pic">
 
 <div class="about-text">
 
 <h2 class="section-title">Instructor</h2>
 
 <p>
-I am <strong>Araceli Martínez-Holguín</strong>, a PhD student in Economics at the
+<strong>Araceli Martínez-Holguín</strong> is a PhD student in Economics at the
 National Autonomous University of Mexico (UNAM).
 </p>
 
 <p>
-My research focuses on the relationship between
-<strong>extreme climate events and food prices</strong>, with a broader interest
-in macroeconomics, monetary policy, and sustainable finance.
+Her research studies the relationship between
+<strong>extreme climate events and food prices</strong>,
+with broader interests in macroeconomics,
+monetary policy, and sustainable finance.
 </p>
 
 <p>
-In this course I teach students how to use <strong>R</strong> to work with
-economic data and conduct reproducible empirical analysis.
+In this course she teaches students how to use <strong>R</strong>
+to conduct empirical economic analysis and build
+reproducible research workflows.
 </p>
 
 <div class="links">
 
-<a href="mailto:araceli.martinez@economia.unam.mx">Email</a>
-
-<a href="https://github.com/araceli-martinez-holguin">GitHub</a>
-
-<a href="https://www.linkedin.com/in/aracelimholguin24111994/">LinkedIn</a>
+<a href="mailto:araceli.martinez@economia.unam.mx">Email</a> <a href="https://github.com/araceli-martinez-holguin">GitHub</a> <a href="https://www.linkedin.com/in/aracelimholguin24111994/">LinkedIn</a>
 
 </div>
 
@@ -328,7 +389,7 @@ economic data and conduct reproducible empirical analysis.
 
 </section>
 
-<!-- COURSE DESCRIPTION -->
+<!-- COURSE OVERVIEW -->
 
 <section class="section section-light">
 
@@ -337,18 +398,18 @@ economic data and conduct reproducible empirical analysis.
 <p>
 This course introduces students to <strong>empirical economic analysis using R</strong>.
 Students learn how to clean, visualize, and analyze economic datasets while
-developing reproducible research workflows using modern data science tools.
+developing reproducible research workflows.
 </p>
 
 <p>
 Laboratories combine programming techniques with applied economic questions
-using datasets related to climate data, agricultural production, and
-macroeconomic indicators.
+using datasets related to climate data, agricultural production,
+and macroeconomic indicators.
 </p>
 
 </section>
 
-<!-- COURSE CONTENT -->
+<!-- TOPICS -->
 
 <section class="section section-dark">
 
@@ -369,9 +430,53 @@ macroeconomic indicators.
 
 </section>
 
-<!-- LABS -->
+<!-- COURSE ROADMAP -->
 
 <section class="section section-light">
+
+<h2 class="section-title">Course Roadmap</h2>
+
+<div class="roadmap">
+
+<div class="step">
+<div class="step-number">1</div>
+<div class="step-text">
+<strong>Foundations of R</strong> — understanding objects,
+vectors, and data structures.
+</div>
+</div>
+
+<div class="step">
+<div class="step-number">2</div>
+<div class="step-text">
+<strong>Climate Data Analysis</strong> — applying data
+manipulation and visualization using CRU climate datasets.
+</div>
+</div>
+
+<div class="step">
+<div class="step-number">3</div>
+<div class="step-text">
+<strong>Agricultural Production</strong> — analyzing
+avocado production in Mexico using SIAP data.
+</div>
+</div>
+
+<div class="step">
+<div class="step-number">4</div>
+<div class="step-text">
+<strong>Macroeconomic Analysis</strong> — combining
+data structures and time series to explore inflation dynamics.
+</div>
+</div>
+
+</div>
+
+</section>
+
+<!-- LABS -->
+
+<section id="labs" class="section section-light">
 
 <h2 class="section-title">Laboratories</h2>
 
@@ -405,7 +510,7 @@ macroeconomic indicators.
 
 </section>
 
-<!-- HOW TO USE -->
+<!-- REPOSITORY -->
 
 <section class="section section-dark">
 
@@ -418,8 +523,9 @@ git clone https://github.com/araceli-martinez-holguin/economics-r-course.git
 </pre>
 
 <p>
-Open the project in RStudio and navigate to any laboratory folder.
-Open the `.Rmd` file and run the code or knit to HTML.
+Open the project in RStudio, navigate to a laboratory folder,
+open the `.Rmd` file and run the code or knit the document
+to reproduce the analysis.
 </p>
 
 </section>
