@@ -1,0 +1,750 @@
+---
+title: 'Laboratorio 1: Analizando Variables Climáticas con Datos CRU'
+author: "Araceli Martínez"
+date: "`r format(Sys.Date(), '%d de %B de %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    theme: flatly
+    highlight: tango
+    number_sections: true
+    df_print: paged
+    code_folding: show
+  pdf_document:
+    toc: true
+    toc_depth: '3'
+subtitle: Laboratorio — R para Economistas
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  fig.width = 9,
+  fig.height = 6
+)
+```
+
+---
+
+# Introducción
+
+En esta práctica aprenderemos a descargar, limpiar y visualizar datos climáticos históricos utilizando el conjunto de datos **CRU TS 4.09** (Climatic Research Unit gridded Time Series), que cubre el período **1901–2024** con resolución mensual para más de 190 países.
+
+Trabajaremos con cuatro variables principales:
+
+| Código | Variable | Unidad |
+|--------|----------|--------|
+| `pre`  | Precipitación | mm |
+| `tmp`  | Temperatura media | °C |
+| `tmn`  | Temperatura mínima | °C |
+| `tmx`  | Temperatura máxima | °C |
+
+> **Fuente de los datos:** University of East Anglia, Climatic Research Unit.  
+> URL base: `https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.09/`
+
+---
+
+# Configuración del Entorno
+
+## Librerías necesarias
+
+```{r librerias}
+# Instalar si no está disponible:
+# install.packages("readr")
+
+library(readr)
+```
+
+## Directorio de trabajo
+
+```{r directorio, eval=FALSE}
+setwd("~/Documents/Cursos-R/Tarea-0")
+```
+
+---
+
+# Descarga de Datos
+
+## Definir variables y países
+
+Seleccionamos las cuatro variables climáticas y un conjunto amplio de países del G20 más la Unión Europea.
+
+```{r variables-paises}
+variables <- c("pre", "tmn", "tmp", "tmx")
+
+g20_countries <- unique(c(
+  "Argentina", "Australia", "Brazil", "Canada", "China",
+  "France", "Germany", "India", "Indonesia", "Italy",
+  "Japan", "Mexico", "Russia", "Saudi_Arabia", "South_Africa",
+  "South_Korea", "Turkey", "United_Kingdom", "USA",
+  "Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus",
+  "Czech_Republic", "Denmark", "Estonia", "Finland", "Greece",
+  "Hungary", "Ireland", "Latvia", "Lithuania", "Luxembourg",
+  "Malta", "Netherlands", "Poland", "Portugal", "Romania",
+  "Slovakia", "Slovenia", "Spain", "Sweden"
+))
+
+cat("Total de países:", length(g20_countries), "\n")
+cat("Variables:", paste(variables, collapse = ", "), "\n")
+```
+
+## Descargar archivos `.per`
+
+El loop descarga cada archivo solo si **no existe ya** en el directorio de trabajo, por lo que es seguro volver a correr el bloque sin re-descargar todo. Los errores 404 se capturan e imprimen sin detener la ejecución.
+
+> ⚠️ **Antes de hacer Knit:** asegúrate de que tu directorio de trabajo es correcto (`setwd`) y que tienes conexión a internet. La descarga completa puede tardar varios minutos.
+
+```{r descarga}
+base_url <- "https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.09/crucy.2503061057.v4.09/countries"
+
+total    <- length(g20_countries) * length(variables)
+contador <- 0
+
+for (country in g20_countries) {
+  for (var in variables) {
+    contador <- contador + 1
+    file     <- paste0("crucy.v4.09.1901.2024.", country, ".", var, ".per")
+
+    if (!file.exists(file)) {
+      tryCatch(
+        {
+          download.file(
+            url      = paste0(base_url, "/", var, "/", file),
+            destfile = file,
+            mode     = "wb",
+            quiet    = TRUE
+          )
+          message(sprintf("[%d/%d] Descargado: %s", contador, total, file))
+        },
+        error = function(e) message(sprintf("[%d/%d] 404 – no encontrado: %s", contador, total, file))
+      )
+    } else {
+      message(sprintf("[%d/%d] Ya existe, omitido: %s", contador, total, file))
+    }
+  }
+}
+
+message("✔ Descarga completada.")
+```
+
+---
+
+# Carga de Datos
+
+## Estructura de los archivos `.per`
+
+Cada archivo `.per` tiene 18 columnas: año, doce meses, cuatro estaciones (MAM, JJA, SON, DJF) y el valor anual (ANN). Las primeras 4 líneas son encabezado y se omiten con `skip = 4`.
+
+```{r nombres-columnas}
+col_names <- c("Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+               "MAM", "JJA", "SON", "DJF", "ANN")
+```
+
+> **Nota sobre estaciones:**
+> - **DJF** (Dec–Feb): Invierno  
+> - **MAM** (Mar–May): Primavera  
+> - **JJA** (Jun–Ago): Verano  
+> - **SON** (Sep–Nov): Otoño  
+
+## Leer archivos y construir la lista de datos
+
+Cada archivo `.per` se lee con `read_table()`, saltando las 4 primeras líneas de encabezado. El valor `-999.0` indica dato faltante y se convierte automáticamente a `NA`. El resultado es una lista nombrada con la clave `"Pais_variable"` (ej. `"Mexico_tmp"`).
+
+```{r carga-datos}
+climate_data   <- list()
+no_encontrados <- c()
+
+for (country in g20_countries) {
+  for (var in variables) {
+    file <- paste0("crucy.v4.09.1901.2024.", country, ".", var, ".per")
+    if (file.exists(file)) {
+      df <- read_table(file, skip = 4, col_names = col_names,
+                       na = "-999.0", show_col_types = FALSE)
+      df$Country  <- country
+      df$Variable <- var
+      climate_data[[paste0(country, "_", var)]] <- df
+    } else {
+      no_encontrados <- c(no_encontrados, file)
+    }
+  }
+}
+
+cat(sprintf("Entradas cargadas en climate_data: %d de %d esperadas\n",
+            length(climate_data),
+            length(g20_countries) * length(variables)))
+
+if (length(no_encontrados) > 0) {
+  cat(sprintf("Archivos no encontrados (%d):\n", length(no_encontrados)))
+  cat(paste(" -", no_encontrados, collapse = "\n"), "\n")
+}
+
+# Vista rapida de la estructura de un dataframe de ejemplo
+cat("\nEstructura de Mexico_tmp:\n")
+str(climate_data[["Mexico_tmp"]])
+```
+
+---
+
+# Sección 1: Precipitación Mensual Promedio para México
+
+## Estadísticas descriptivas
+
+```{r stats-mexico-pre}
+mexico_pre <- climate_data[["Mexico_pre"]]
+
+months <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+mean_monthly <- as.integer(round(sapply(months, function(m) mean(mexico_pre[[m]], na.rm = TRUE))))
+sd_monthly   <- as.integer(round(sapply(months, function(m) sd(mexico_pre[[m]], na.rm = TRUE))))
+min_monthly  <- as.integer(round(sapply(months, function(m) min(mexico_pre[[m]], na.rm = TRUE))))
+max_monthly  <- as.integer(round(sapply(months, function(m) max(mexico_pre[[m]], na.rm = TRUE))))
+
+stats_mexico <- data.frame(
+  Mes    = months,
+  Media  = mean_monthly,
+  DE     = sd_monthly,
+  Mínimo = min_monthly,
+  Máximo = max_monthly
+)
+
+knitr::kable(stats_mexico,
+             caption = "Estadísticas de precipitación mensual para México (1901–2024)",
+             align   = "lrrrr")
+```
+
+## Gráfico de barras
+
+```{r barplot-mexico-pre, fig.cap="Precipitación mensual promedio en México (1901–2024)"}
+bp_mexico <- barplot(
+  mean_monthly,
+  names.arg = months,
+  col       = "deepskyblue4",
+  main      = "Precipitación Mensual Promedio en México (1901–2024)",
+  ylab      = "Precipitación (mm)",
+  xlab      = "Mes",
+  ylim      = c(0, max(mean_monthly) * 1.15),
+  cex.names = 0.9,
+  cex.axis  = 0.9,
+  las       = 1,
+  font.lab  = 2
+)
+
+text(x      = bp_mexico[, 1],
+     y      = mean_monthly + 2,
+     labels = mean_monthly,
+     cex    = 0.8,
+     col    = "black",
+     adj    = c(0.5, 0))
+
+abline(h   = mean(mean_monthly),
+       col = "red", lwd = 2, lty = 2)
+
+legend("topleft",
+       legend = paste("Media anual:", round(mean(mean_monthly)), "mm"),
+       col    = "red", lty = 2, lwd = 2, bty = "n")
+```
+
+**Interpretación:** La precipitación en México es claramente estacional, con un pico marcado en los meses de verano (junio–septiembre) asociado a la temporada de lluvias. Los meses de invierno presentan valores muy bajos.
+
+---
+
+# Sección 2: Precipitación Anual Promedio por País (G20)
+
+## Calcular medias anuales
+
+```{r annual-pre}
+annual_pre <- data.frame(Country = character(), Mean_ANN = numeric())
+
+for (country in g20_countries) {
+  key <- paste0(country, "_pre")
+  if (key %in% names(climate_data)) {
+    mean_ann   <- mean(climate_data[[key]]$ANN, na.rm = TRUE)
+    annual_pre <- rbind(annual_pre,
+                        data.frame(Country = country, Mean_ANN = mean_ann))
+  }
+}
+
+# Ordenar de mayor a menor
+annual_pre <- annual_pre[order(annual_pre$Mean_ANN, decreasing = TRUE), ]
+
+knitr::kable(head(annual_pre, 10),
+             caption = "Top 10 países con mayor precipitación anual promedio",
+             digits  = 1,
+             col.names = c("País", "Precipitación media anual (mm)"))
+```
+
+## Gráfico comparativo
+
+```{r barplot-g20-pre, fig.width=12, fig.height=6, fig.cap="Precipitación anual promedio — países G20 y UE"}
+blues_palette <- colorRampPalette(c("#97FFFF", "#8DEEEE", "#79CDCD", "#528B8B", "#2F4F4F"))
+colors        <- blues_palette(nrow(annual_pre))[rank(annual_pre$Mean_ANN)]
+
+bp_g20 <- barplot(
+  annual_pre$Mean_ANN,
+  names.arg = annual_pre$Country,
+  las       = 2,
+  col       = colors,
+  main      = "Precipitación anual promedio por país",
+  ylab      = "Precipitación (mm)",
+  ylim      = c(0, max(annual_pre$Mean_ANN) * 1.15),
+  cex.names = 0.6,
+  cex.axis  = 0.9,
+  font.lab  = 2
+)
+
+text(x      = bp_g20[, 1],
+     y      = annual_pre$Mean_ANN + 5,
+     labels = round(annual_pre$Mean_ANN),
+     cex    = 0.55,
+     col    = "black",
+     adj    = c(0.5, 0))
+
+abline(h   = mean(annual_pre$Mean_ANN),
+       col = "red", lwd = 2, lty = 2)
+
+legend("topright",
+       legend = paste("Media G20:", round(mean(annual_pre$Mean_ANN)), "mm"),
+       col    = "red", lty = 2, lwd = 2, bty = "n")
+```
+
+---
+
+# Sección 3: Temperatura Anual Promedio por País (G20)
+
+## Calcular medias anuales de temperatura
+
+```{r annual-tmp}
+annual_tmp <- data.frame(Country = character(), Mean_ANN = numeric())
+
+for (country in g20_countries) {
+  key <- paste0(country, "_tmp")
+  if (key %in% names(climate_data)) {
+    mean_ann   <- mean(climate_data[[key]]$ANN, na.rm = TRUE)
+    annual_tmp <- rbind(annual_tmp,
+                        data.frame(Country = country, Mean_ANN = mean_ann))
+  }
+}
+
+annual_tmp <- annual_tmp[order(annual_tmp$Mean_ANN, decreasing = TRUE), ]
+
+knitr::kable(head(annual_tmp, 10),
+             caption = "Top 10 países más cálidos (temperatura anual promedio)",
+             digits  = 1,
+             col.names = c("País", "Temperatura media anual (°C)"))
+```
+
+## Gráfico comparativo
+
+```{r barplot-g20-tmp, fig.width=12, fig.height=6, fig.cap="Temperatura anual promedio — países G20 y UE"}
+dark_palette <- colorRampPalette(c("brown4", "brown", "brown3", "brown2", "brown1"))
+colors       <- dark_palette(nrow(annual_tmp))[rank(annual_tmp$Mean_ANN)]
+
+bp_tmp_g20 <- barplot(
+  annual_tmp$Mean_ANN,
+  names.arg = annual_tmp$Country,
+  las       = 2,
+  col       = colors,
+  main      = "Temperatura anual promedio por país",
+  ylab      = "Temperatura (°C)",
+  ylim      = c(0, max(annual_tmp$Mean_ANN) * 1.15),
+  cex.names = 0.6,
+  cex.axis  = 0.9,
+  font.lab  = 2
+)
+
+text(x      = bp_tmp_g20[, 1],
+     y      = annual_tmp$Mean_ANN + 0.3,
+     labels = round(annual_tmp$Mean_ANN, 1),
+     cex    = 0.55,
+     col    = "black",
+     adj    = c(0.5, 0))
+
+abline(h   = mean(annual_tmp$Mean_ANN),
+       col = "red", lwd = 2, lty = 2)
+
+legend("topright",
+       legend = paste("Media G20:", round(mean(annual_tmp$Mean_ANN), 1), "°C"),
+       col    = "red", lty = 2, lwd = 2, bty = "n")
+```
+
+---
+
+# Sección 4: Series de Tiempo con Tendencia
+
+La temperatura promedio anual de un país puede analizarse como una **serie de tiempo**. Ajustar una regresión lineal (`lm`) nos permite visualizar la tendencia a largo plazo.
+
+## México — Temperatura
+
+```{r ts-tmp-mexico, fig.cap="Serie de tiempo de temperatura anual en México con tendencia lineal"}
+country_ts <- climate_data[["Mexico_tmp"]]
+trend      <- lm(ANN ~ Year, data = country_ts)
+
+plot(country_ts$Year, country_ts$ANN,
+     type = "l", col = "tomato", lwd = 2,
+     main = "Temperatura Promedio Anual de México (1901–2024)",
+     xlab = "Año", ylab = "Temperatura (°C)")
+
+abline(trend, col = "black", lwd = 2, lty = 2)
+
+legend("topleft",
+       legend = c("Temperatura anual", "Tendencia lineal"),
+       col    = c("tomato", "black"),
+       lty    = c(1, 2), lwd = 2, bty = "n")
+
+cat(sprintf("Pendiente estimada: %.4f °C/año\n", coef(trend)["Year"]))
+cat(sprintf("Calentamiento total estimado (1901-2024): %.2f °C\n",
+            coef(trend)["Year"] * (2024 - 1901)))
+```
+
+> **Interpretación económica:** El calentamiento observado tiene implicaciones para la productividad agrícola, el consumo energético y los patrones de migración, temas centrales en la economía del desarrollo y la economía ambiental.
+
+## México — Precipitación
+
+```{r ts-pre-mexico, fig.cap="Serie de tiempo de precipitación anual en México con tendencia lineal"}
+country_ts <- climate_data[["Mexico_pre"]]
+trend      <- lm(ANN ~ Year, data = country_ts)
+
+plot(country_ts$Year, country_ts$ANN,
+     type = "l", col = "slateblue1", lwd = 2,
+     main = "Precipitación Promedio Anual de México (1901–2024)",
+     xlab = "Año", ylab = "Precipitación (mm)")
+
+abline(trend, col = "black", lwd = 2, lty = 2)
+
+legend("topleft",
+       legend = c("Precipitación anual", "Tendencia lineal"),
+       col    = c("slateblue1", "black"),
+       lty    = c(1, 2), lwd = 2, bty = "n")
+```
+---
+
+# Sección 5: Tasa de Crecimiento Anual (YoY)
+
+La **tasa de crecimiento año a año** (Year-over-Year, YoY) mide el cambio porcentual entre años consecutivos:
+
+$$\text{YoY}_t = \frac{X_t - X_{t-1}}{X_{t-1}} \times 100$$
+
+```{r yoy-mexico-tmp, fig.cap="Tasa de crecimiento YoY de la temperatura anual en México"}
+country_ts <- climate_data[["Mexico_tmp"]]
+country_ts$YoY_growth <- c(NA, diff(country_ts$ANN) / head(country_ts$ANN, -1) * 100)
+
+plot(country_ts$Year[-1], country_ts$YoY_growth[-1],
+     type = "l", col = "tomato", lwd = 2,
+     main = "Tasa de Crecimiento YoY de Temperatura en México (1901–2024)",
+     xlab = "Año", ylab = "(%)")
+
+abline(h = 0, col = "black", lty = 2)
+```
+
+## México — Precipitación YoY
+
+```{r yoy-mexico-pre, fig.cap="Tasa de crecimiento YoY de la precipitación anual en México"}
+country_ts <- climate_data[["Mexico_pre"]]
+country_ts$YoY_growth <- c(NA, diff(country_ts$ANN) / head(country_ts$ANN, -1) * 100)
+
+plot(country_ts$Year[-1], country_ts$YoY_growth[-1],
+     type = "l", col = "slateblue", lwd = 2,
+     main = "Tasa de Crecimiento YoY de Precipitación en México (1901–2024)",
+     xlab = "Año", ylab = "(%)")
+
+abline(h = 0, col = "black", lty = 2)
+```
+---
+
+# Sección 6: Bubble Plot — Años Extremos de Temperatura
+
+## Construir el data frame de años extremos
+
+```{r extreme-years-tmp}
+extreme_years <- data.frame(
+  Country   = character(),
+  Hottest   = numeric(),
+  Coldest   = numeric(),
+  Year_Hot  = numeric(),
+  Year_Cold = numeric()
+)
+
+for (country in g20_countries) {
+  key <- paste0(country, "_tmp")
+  if (key %in% names(climate_data)) {
+    df <- climate_data[[key]]
+    extreme_years <- rbind(extreme_years, data.frame(
+      Country   = country,
+      Hottest   = round(max(df$ANN, na.rm = TRUE), 2),
+      Coldest   = round(min(df$ANN, na.rm = TRUE), 2),
+      Year_Hot  = df$Year[which.max(df$ANN)],
+      Year_Cold = df$Year[which.min(df$ANN)]
+    ))
+  }
+}
+
+knitr::kable(extreme_years,
+             caption = "Anos extremos de temperatura por pais",
+             digits  = 2,
+             col.names = c("Pais", "Temp. maxima (C)", "Temp. minima (C)",
+                           "Ano mas calido", "Ano mas frio"))
+```
+
+## Función `plot_bubble_panel`
+
+La función dibuja un panel por cada año extremo. Cuando se llama desde un chunk de RMarkdown **sin** `png()`/`dev.off()`, el gráfico se renderiza directamente en el HTML.
+
+```{r bubble-fun}
+plot_bubble_panel <- function(data, temp_col, year_col, title, ramp, unit) {
+
+  years      <- sort(unique(data[[year_col]]))
+  chunks     <- split(years, ceiling(seq_along(years) / 6))
+  global_min <- min(data[[temp_col]])
+  global_max <- max(data[[temp_col]])
+
+  for (i in seq_along(chunks)) {
+
+    chunk_years <- chunks[[i]]
+    n_panels    <- length(chunk_years)
+    n_cols      <- 3
+    n_rows      <- ceiling(n_panels / n_cols)
+
+    par(mfrow = c(n_rows, n_cols),
+        mar   = c(5.5, 4.5, 3.5, 1.5),
+        oma   = c(2, 2.5, 4, 1),
+        bg    = "white")
+
+    for (yr in chunk_years) {
+
+      sub <- data[data[[year_col]] == yr, ]
+      sub <- sub[order(sub[[temp_col]]), ]
+      n   <- nrow(sub)
+      x   <- seq_len(n)
+
+      cex_vals <- 1.2 + (sub[[temp_col]] - global_min) / (global_max - global_min) * 4.5
+
+      pal      <- colorRampPalette(ramp)(100)
+      idx      <- round((sub[[temp_col]] - global_min) / (global_max - global_min) * 99) + 1
+      col_vals <- pal[pmax(1, pmin(100, idx))]
+
+      local_min <- min(sub[[temp_col]])
+      local_max <- max(sub[[temp_col]])
+      y_pad     <- max((local_max - local_min) * 0.45, abs(local_min) * 0.20)
+      ylim      <- c(local_min - y_pad, local_max + y_pad)
+
+      plot(x, sub[[temp_col]],
+           type = "n", xlim = c(0.5, n + 0.5), ylim = ylim,
+           xaxt = "n", yaxt = "n", xlab = "", ylab = "",
+           main = yr, font.main = 2, cex.main = 1.1)
+
+      abline(h = pretty(ylim, n = 4), col = "grey88", lty = 1, lwd = 0.6)
+      abline(h = 0, col = "grey60", lty = 2, lwd = 0.8)
+
+      points(x, sub[[temp_col]],
+             pch = 21, bg = col_vals,
+             col = "white", cex = cex_vals, lwd = 0.6)
+
+      text(x, sub[[temp_col]] + (local_max - local_min + y_pad) * 0.14,
+           labels = paste0(round(sub[[temp_col]]), unit),
+           cex = 0.65, col = "grey20", font = 2)
+
+      axis(1, at = x, labels = sub$Country, las = 2,
+           cex.axis = 0.65, tick = FALSE, line = 0)
+
+      axis(2, at = pretty(ylim, n = 4),
+           labels = paste0(pretty(ylim, n = 4), unit),
+           las = 1, cex.axis = 0.65, col.axis = "grey40",
+           tick = TRUE, col = "grey80")
+
+      box(col = "grey80")
+    }
+
+    if (n_panels %% n_cols != 0) {
+      for (k in seq_len(n_cols - n_panels %% n_cols)) plot.new()
+    }
+
+    mtext(paste0(title, "  [", min(chunk_years), "-", max(chunk_years), "]"),
+          outer = TRUE, side = 3, line = 2.2, font = 2, cex = 0.85)
+    mtext(paste0("Part ", i, " of ", length(chunks)),
+          outer = TRUE, side = 3, line = 0.8, font = 3, cex = 0.7, col = "grey50")
+    mtext(paste0("Annual temperature (", unit, ")"),
+          outer = TRUE, side = 2, line = 0.8, cex = 0.75, col = "grey30")
+  }
+}
+```
+
+## Años más cálidos
+
+```{r bubble-hottest, fig.width=12, fig.height=7}
+plot_bubble_panel(
+  data     = extreme_years,
+  temp_col = "Hottest",
+  year_col = "Year_Hot",
+  title    = "Hottest annual temperature on record by country, grouped by peak year",
+  ramp     = c("steelblue", "gold", "firebrick"),
+  unit     = "C"
+)
+```
+
+## Años más fríos
+
+```{r bubble-coldest, fig.width=12, fig.height=7}
+plot_bubble_panel(
+  data     = extreme_years,
+  temp_col = "Coldest",
+  year_col = "Year_Cold",
+  title    = "Coldest annual temperature on record by country, grouped by peak cold year",
+  ramp     = c("firebrick", "gold", "steelblue"),
+  unit     = "C"
+)
+```
+
+---
+# Sección 8: Temperatura Estacional — 7 Países
+
+Comparamos la temperatura media por estación para países de diferentes zonas climáticas.
+```{r estacional-tmp, fig.width=11, fig.height=8, fig.cap="Temperatura media estacional para 7 países de distintas zonas climáticas"}
+selected <- c("Germany", "Mexico", "Brazil", "India",
+              "China", "Indonesia", "South_Africa")
+seasons  <- c("DJF", "MAM", "JJA", "SON")
+season_labels <- c("DJF (Invierno)", "MAM (Primavera)",
+                   "JJA (Verano)",   "SON (Otoño)")
+country_colors <- c("#B0E0E6", "#FFF68F", "#9ACD32", "#191970",
+                    "#C71585", "#48D1CC", "#F4A460")
+
+png("temperatura_estacional_7paises.png", width = 1100, height = 800, res = 100)
+
+par(mfrow = c(2, 2), mar = c(6, 4, 3, 1))
+
+for (i in seq_along(seasons)) {
+  s <- seasons[i]
+  seasonal_means <- sapply(selected, function(country) {
+    key <- paste0(country, "_tmp")
+    if (key %in% names(climate_data)) {
+      mean(climate_data[[key]][[s]], na.rm = TRUE)
+    } else NA
+  })
+  barplot(seasonal_means,
+          names.arg = selected,
+          col       = country_colors,
+          main      = season_labels[i],
+          ylab      = "Temperatura (°C)",
+          ylim      = c(-10, 35),
+          las       = 2,
+          cex.names = 0.75,
+          font.lab  = 2)
+  abline(h = 0, col = "gray50", lty = 2)
+}
+
+dev.off()
+par(mfrow = c(1, 1))
+
+# Redibujar en el HTML
+par(mfrow = c(2, 2), mar = c(6, 4, 3, 1))
+
+for (i in seq_along(seasons)) {
+  s <- seasons[i]
+  seasonal_means <- sapply(selected, function(country) {
+    key <- paste0(country, "_tmp")
+    if (key %in% names(climate_data)) {
+      mean(climate_data[[key]][[s]], na.rm = TRUE)
+    } else NA
+  })
+  barplot(seasonal_means,
+          names.arg = selected,
+          col       = country_colors,
+          main      = season_labels[i],
+          ylab      = "Temperatura (°C)",
+          ylim      = c(-10, 35),
+          las       = 2,
+          cex.names = 0.75,
+          font.lab  = 2)
+  abline(h = 0, col = "gray50", lty = 2)
+}
+
+par(mfrow = c(1, 1))
+```
+
+> **Nota:** La estacionalidad de DJF e JJA está **invertida** entre hemisferios: cuando es invierno en Alemania (DJF), es verano en Brasil y Sudáfrica.
+
+---
+
+# Sección 9: Precipitación y Temperatura a lo Largo del Tiempo
+```{r dual-axis-pre-tmp, fig.cap="Temperatura y precipitación anual en México (1901–2024) — doble eje"}
+pre_mx <- climate_data[["Mexico_pre"]][, c("Year", "ANN")]
+tmp_mx <- climate_data[["Mexico_tmp"]][, c("Year", "ANN")]
+
+colnames(pre_mx) <- c("Year", "Precipitation")
+colnames(tmp_mx) <- c("Year", "Temperature")
+
+merged_mx <- merge(pre_mx, tmp_mx, by = "Year")
+
+cor_val <- cor(merged_mx$Temperature, merged_mx$Precipitation,
+               use = "complete.obs")
+
+# Función auxiliar para dibujar el gráfico de doble eje
+draw_dual_axis <- function() {
+  par(mar = c(5, 4.5, 4, 4.5))
+
+  plot(merged_mx$Year, merged_mx$Precipitation,
+       type = "l", col = "steelblue", lwd = 2,
+       main = "Precipitación y Temperatura Anual — México (1901–2024)",
+       xlab = "Año", ylab = "Precipitación (mm)",
+       ylim = c(min(merged_mx$Precipitation, na.rm = TRUE) * 0.9,
+                max(merged_mx$Precipitation, na.rm = TRUE) * 1.1),
+       las  = 1)
+
+  par(new = TRUE)
+
+  plot(merged_mx$Year, merged_mx$Temperature,
+       type = "l", col = "tomato", lwd = 2,
+       axes = FALSE, xlab = "", ylab = "",
+       ylim = c(min(merged_mx$Temperature, na.rm = TRUE) * 0.97,
+                max(merged_mx$Temperature, na.rm = TRUE) * 1.03))
+
+  axis(side = 4, las = 1, col.axis = "tomato", col = "tomato")
+  mtext("Temperatura (°C)", side = 4, line = 3.5, col = "tomato", font = 2)
+
+  legend("topleft",
+         legend = c("Precipitación (mm)", "Temperatura (°C)",
+                    paste0("r = ", round(cor_val, 3))),
+         col    = c("steelblue", "tomato", NA),
+         lty    = c(1, 1, NA),
+         lwd    = c(2, 2, NA),
+         bty    = "n", cex = 0.85)
+}
+
+# Guardar PNG
+png("precipitacion_temperatura_mexico.png", width = 800, height = 600, res = 100)
+draw_dual_axis()
+dev.off()
+
+# Renderizar en HTML
+draw_dual_axis()
+par(mar = c(5, 4, 4, 2))
+```
+---
+
+# Resumen
+
+En esta práctica aprendimos a:
+
+1. **Descargar** datos climáticos desde una URL externa de forma automatizada, con manejo de errores y verificación de archivos existentes.
+2. **Leer y estructurar** archivos `.per` en una lista de data frames con claves `"Pais_variable"`.
+3. **Calcular estadísticas descriptivas** (media, desviación estándar, mínimo, máximo) por mes y por país.
+4. **Visualizar** patrones de precipitación y temperatura con gráficos de barras comparativos.
+5. **Analizar series de tiempo** con tendencia lineal para México y Brasil (temperatura y precipitación).
+6. **Calcular la tasa de crecimiento YoY** para detectar cambios interanuales abruptos.
+7. **Identificar años extremos** por país y visualizarlos con bubble plots de alta resolución.
+8. **Comparar estacionalidad** entre países de distintas zonas climáticas (hemisferio norte y sur).
+9. **Explorar la relación** entre temperatura y precipitación mediante diagramas de dispersión y correlación.
+
+---
+
+# Información de sesión
+
+```{r session-info}
+sessionInfo()
+```
