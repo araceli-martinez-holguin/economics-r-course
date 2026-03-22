@@ -1,0 +1,258 @@
+---
+title: "Práctica 1 — Tarea: Analizando Variables Climáticas con Datos CRU"
+subtitle: "R para Economistas"
+author: "Tu nombre aquí"
+date: "`r format(Sys.Date(), '%d de %B de %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    theme: flatly
+    highlight: tango
+    number_sections: true
+    df_print: paged
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo      = TRUE,
+  warning   = FALSE,
+  message   = FALSE,
+  fig.align = "center",
+  fig.width = 9,
+  fig.height = 6
+)
+```
+
+---
+
+> **Instrucciones generales**
+>
+> - Antes de comenzar, asegúrate de haber corrido el laboratorio completo en tu sesión de R para que `climate_data` esté disponible.
+> - Cada ejercicio plantea una **pregunta de investigación**. Usa el código del laboratorio como referencia y adáptalo para responderla.
+> - Escribe tu interpretación debajo de cada gráfico en el espacio indicado.
+> - Al finalizar haz `Knit → HTML` y sube el archivo `.html` al portal del curso.
+
+---
+
+> **Países disponibles:** Todos los listados en `g20_countries` del laboratorio. Usa el nombre exacto como aparece ahí (ej. `"Brazil"`, `"South_Africa"`, `"United_Kingdom"`).
+
+---
+
+# Ejercicio 1 — ¿Cómo varía la precipitación mensual en el país que elegiste? {.tabset}
+
+**Pregunta de investigación:** ¿Tiene tu país una temporada de lluvias claramente definida, o la precipitación se distribuye de manera uniforme a lo largo del año? ¿Qué implicaciones tendría esto para la planificación agrícola?
+
+> Elige un país diferente a México. Este será tu **país de referencia** para el resto de la tarea. Consulta la **Sección 1** del laboratorio.
+
+## Estadísticas descriptivas
+
+```{r ej1-stats}
+mi_pais <- "TuPais"   # <-- EDITA AQUI
+
+# Tu código aquí
+
+
+```
+
+## Gráfico de barras
+
+```{r ej1-barplot}
+# Tu código aquí
+
+
+```
+
+## Interpretación
+
+> *¿En qué meses se concentra la lluvia? ¿Es una distribución uniforme o estacional? ¿Cómo se compara con México? ¿Qué consecuencias tiene para la agricultura del país?*
+
+---
+
+# Ejercicio 2 — ¿Qué tan diferente es la temperatura mensual entre dos países de distintas zonas climáticas?
+
+**Pregunta de investigación:** Si comparas un país tropical con uno de clima templado o frío, ¿qué tan grande es la diferencia en temperatura mensual promedio? ¿Cuál presenta mayor variación estacional?
+
+> Elige dos países de zonas climáticas contrastantes. Consulta la **Sección 2** del laboratorio para el código base y adáptalo para temperatura mensual.
+
+```{r ej2-temperatura}
+pais_a <- "TuPaisA"   # <-- EDITA AQUI (ej. pais tropical)
+pais_b <- "TuPaisB"   # <-- EDITA AQUI (ej. pais frio o templado)
+
+# Tu código aquí
+
+
+```
+
+> *¿Cuál de los dos países tiene mayor amplitud térmica anual? ¿Qué explica esa diferencia (latitud, altitud, influencia oceánica)? ¿Cómo afecta esto a su economía agrícola o energética?*
+
+---
+
+# Ejercicio 3 — En el contexto del G20, ¿qué tan cálido es tu país?
+
+**Pregunta de investigación:** ¿En qué posición se ubica el país que elegiste según su temperatura anual promedio histórica? ¿Es de los más cálidos, más fríos, o está cerca de la media del G20?
+
+> Consulta la **Sección 3** del laboratorio. Intenta resaltar tu país en el gráfico con un color diferente.
+
+```{r ej3-tmp-anual, fig.width=12, fig.height=6}
+# Tu código aquí
+
+
+```
+
+> *¿Dónde se ubica tu país respecto a la media del G20? ¿Qué países lo superan o están por debajo? ¿Tiene sentido geográficamente?*
+
+---
+
+# Ejercicio 4 — ¿Se está calentando el país que elegiste?
+
+**Pregunta de investigación:** ¿Existe evidencia de calentamiento a largo plazo en la temperatura anual de tu país? ¿A qué ritmo (°C por año) y cuánto ha cambiado en total desde 1901?
+
+> Consulta la **Sección 4** del laboratorio.
+
+## 4a. Serie de tiempo de temperatura
+
+```{r ej4a-ts-tmp}
+# Tu código aquí
+# Imprime también la pendiente estimada y el cambio total 1901-2024
+
+
+```
+
+## 4b. Serie de tiempo de precipitación para dos países
+
+> ¿Muestra la precipitación alguna tendencia clara, o es más errática que la temperatura? Elige dos países.
+
+```{r ej4b-ts-pre, fig.width=11, fig.height=5}
+pais_pre_a <- "TuPaisA"   # <-- EDITA AQUI
+pais_pre_b <- "TuPaisB"   # <-- EDITA AQUI
+
+# Tu código aquí
+
+
+```
+
+> *¿La temperatura de tu país muestra una tendencia positiva, negativa o sin cambio claro? ¿Cuántos grados ha cambiado desde 1901? ¿Cuál variable es más estable: temperatura o precipitación? ¿Qué implicaciones económicas tiene una tendencia de precipitación al alza o a la baja?*
+
+---
+
+# Ejercicio 5 — ¿En qué años ocurrieron los mayores saltos de temperatura y precipitación?
+
+**Pregunta de investigación:** La tasa de crecimiento año a año (YoY) permite detectar años anómalos. ¿Coinciden los años con mayor variación en tu país con eventos climáticos conocidos como El Niño o erupciones volcánicas? ¿Qué variable es más volátil?
+
+> Calcula la tasa YoY tanto para temperatura como para precipitación de tu país. Consulta la **Sección 5** del laboratorio.
+
+```{r ej5-yoy-tmp}
+# YoY temperatura
+# Tu código aquí
+
+
+```
+
+```{r ej5-yoy-pre}
+# YoY precipitación
+# Tu código aquí
+# Calcula e imprime la desviación estándar de ambas tasas para comparar volatilidad
+
+
+```
+
+> *¿Qué variable es más volátil año a año? ¿En qué año ocurrió el mayor salto? ¿Puedes relacionarlo con algún fenómeno climático o histórico conocido?*
+
+---
+
+# Ejercicio 6 — ¿Qué estación concentra más lluvia en cada zona climática?
+
+**Pregunta de investigación:** ¿Qué estación del año concentra más lluvia en cada uno de los siete países analizados? ¿Hay países cuya precipitación es más uniforme durante el año?
+
+> Reproduce el análisis estacional de la **Sección 8** del laboratorio pero usando precipitación (`_pre`) en lugar de temperatura.
+
+```{r ej6-estacional-pre, fig.width=11, fig.height=8}
+# Tu código aquí
+# Usa los mismos 7 países del laboratorio:
+# "Germany", "Mexico", "Brazil", "India", "China", "Indonesia", "South_Africa"
+
+
+```
+
+> *¿Cuál de los siete países tiene la mayor variabilidad estacional en precipitación? ¿Cuáles tienen una distribución más uniforme? ¿Qué tipo de clima (tropical, monzónico, mediterráneo, etc.) explicaría cada patrón?*
+
+---
+
+# Ejercicio 7 — ¿En qué año fue más seco y más húmedo cada país?
+
+**Pregunta de investigación:** ¿Se agrupan los años más secos o más húmedos en ciertas décadas? ¿Coinciden entre países de una misma región? ¿Qué fenómeno climático global podría explicarlo?
+
+> Construye el `data frame` de años extremos de precipitación y genera los bubble plots. Consulta la **Sección 6** del laboratorio y adapta el código para precipitación.
+
+```{r ej7-extreme-pre}
+# Construir extreme_years_pre con: Wettest, Driest, Year_Wet, Year_Dry
+# Tu código aquí
+
+
+```
+
+```{r ej7-bubble-wet, fig.width=12, fig.height=7}
+# Bubble plot — años más húmedos
+# Tu código aquí
+
+
+```
+
+```{r ej7-bubble-dry, fig.width=12, fig.height=7}
+# Bubble plot — años más secos
+# Tu código aquí
+
+
+```
+
+> *¿Se concentran los años extremos en ciertas décadas? ¿Coinciden varios países en el mismo año? ¿Qué fenómeno climático global podría explicar esa sincronía?*
+
+---
+
+# Ejercicio 8 — ¿Existe una relación entre temperatura y precipitación en tu país?
+
+**Pregunta de investigación:** ¿Los años más cálidos en tu país tienden a ser también más secos o más húmedos? ¿Qué implicaciones tiene esa relación para la disponibilidad de agua y la producción agrícola?
+
+> Consulta la **Sección 9** del laboratorio y replica el gráfico de doble eje para tu país.
+
+```{r ej8-dual-axis}
+# Tu código aquí
+# Imprime también el coeficiente de correlación r
+
+
+```
+
+> *¿Es positiva o negativa la correlación? ¿Qué significa en términos prácticos para ese país? ¿Hay períodos donde ambas variables se mueven en direcciones opuestas?*
+
+---
+
+# Ejercicio 9 — ¿Qué países del G20 se están volviendo más secos o más húmedos?
+
+**Pregunta de investigación:** ¿Hay países del G20 donde la precipitación anual haya cambiado significativamente desde 1901? ¿Se están volviendo más secos o más húmedos? ¿Qué consecuencias económicas tendría esto?
+
+> Este ejercicio no tiene una sección directa en el laboratorio — es tuyo para resolver. Calcula la pendiente de la regresión lineal de precipitación anual para cada país y visualiza el cambio acumulado (pendiente × 123 años) en un gráfico de barras donde el color distinga tendencias positivas (azul) de negativas (rojo).
+
+```{r ej9-tendencias-pre, fig.width=12, fig.height=6}
+# Tu código aquí
+
+
+```
+
+> *¿Qué países muestran la tendencia más pronunciada? ¿Coincide con lo que sabes sobre el cambio climático en esas regiones? ¿Qué consecuencias económicas podría tener para países que dependen de la agricultura de temporal?*
+
+---
+
+# Reflexión Final
+
+> *Responde en un párrafo de 5 a 8 oraciones: ¿Qué patrón climático te resultó más sorprendente? ¿Observas evidencia de cambio climático en los datos? ¿Cómo podrían estos patrones afectar la economía del país que elegiste en términos de agricultura, agua, energía o migración? ¿Qué limitaciones tiene este análisis?*
+
+---
+
+# Información de sesión
+
+```{r session-info}
+sessionInfo()
+```
