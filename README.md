@@ -8,6 +8,7 @@
 🌐 **[View Course Website](https://araceli-martinez-holguin.github.io/economics-r-course/)**
 
 ---
+
 ## 📖 Course Overview
 
 This repository contains R code, laboratories, datasets, and assignments for the **Economics Programming with R** course at UNAM's School of Economics.
@@ -22,13 +23,13 @@ Laboratories combine programming techniques with **real economic datasets**, all
 
 By the end of the course students should be able to:
 
-* Understand and use **basic R programming structures**
-* Manipulate and transform datasets using the **tidyverse**
-* Produce **clear and informative data visualizations**
-* Work with **economic time series**
-* Estimate and interpret **linear regression models**
-* Conduct **basic empirical economic analysis**
-* Produce **reproducible reports using R Markdown**
+- Understand and use **basic R programming structures**
+- Manipulate and transform datasets using the **tidyverse**
+- Produce **clear and informative data visualizations**
+- Work with **economic time series**
+- Estimate and interpret **linear regression models**
+- Conduct **basic empirical economic analysis**
+- Produce **reproducible reports using R Markdown**
 
 ---
 
@@ -36,43 +37,54 @@ By the end of the course students should be able to:
 
 ```
 economics-r-course/
-├── Laboratories/         # Guided R Markdown labs (.Rmd + rendered .html)
-│   ├── Laboratory-0/     # Types of objects in R
-│   └── Laboratory-1/     # Data structures & analysis
-├── Assignments/          # Student assignment prompts and templates
-├── Data/                 # Datasets used across labs and assignments
-├── index.html            # Course website homepage
-└── README.md             # You are here
+├── Laboratories/              # Guided R Markdown labs (.Rmd + rendered .html)
+│   ├── Laboratory-0/          # Types of objects in R
+│   └── Laboratory-1/          # Analyzing climate variables (CRU data)
+├── Assignments/               # Student assignment prompts and templates
+│   └── Assignment-1.Rmd       # Homework based on Laboratory 1
+├── Data/                      # Datasets used across labs and assignments
+│   └── cultivos.xlsx          # SIAP agricultural production data (Mexico)
+├── index.html                 # Course website homepage
+└── README.md                  # You are here
 ```
 
 ---
 
 ## 🧪 Laboratories
 
-| Lab          | Topic                      | Link                                                                                                              |
-| ------------ | -------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Laboratory 0 | Types of objects in R      | [View](https://araceli-martinez-holguin.github.io/economics-r-course/Laboratories/Laboratory-0/Laboratory-0.html) |
-| Laboratory 1 | Data structures & analysis | [View](https://araceli-martinez-holguin.github.io/economics-r-course/Laboratories/Laboratory-1/Laboratory-1.html) |
+| Lab          | Topic                              | Status        | Link |
+|--------------|------------------------------------|---------------|------|
+| Laboratory 0 | Types of objects in R              | ✅ Available  | [View](https://araceli-martinez-holguin.github.io/economics-r-course/Laboratories/Laboratory-0/Laboratory-0.html) |
+| Laboratory 1 | Analyzing climate variables (CRU)  | ✅ Available  | [View](https://araceli-martinez-holguin.github.io/economics-r-course/Laboratories/Laboratory-1/Laboratory-1.html) |
+| Laboratory 2 | Agricultural data with dplyr       | 🔜 Coming soon | — |
+| Laboratory 3 | Spatial analysis in R              | 🔜 Coming soon | — |
+| Laboratory 4 | Time series analysis               | 🔜 Coming soon | — |
 
 > More laboratories will be added throughout the semester.
 
-Future laboratories will include applied economic exercises such as:
+---
 
-* Climate data analysis
-* Agricultural production data (SIAP)
-* Inflation and macroeconomic indicators
+## 📝 Assignments
+
+| Assignment   | Topic                              | Status        | Based on     |
+|--------------|------------------------------------|---------------|--------------|
+| Assignment 1 | Climate variables — homework       | ✅ Available  | Laboratory 1 |
+| Assignment 2 | Agricultural data — homework       | 🔜 Coming soon | Laboratory 2 |
+| Assignment 3 | Spatial analysis — homework        | 🔜 Coming soon | Laboratory 3 |
+
+Assignments are distributed as `.Rmd` templates. Students fill in the code and interpretation, then submit the knitted `.html` file.
 
 ---
 
-## 📊 Data Sources
+## 🗄️ Data
 
-Laboratories use real-world datasets commonly used in economic analysis, including:
+| Dataset         | Description                              | Used in      |
+|-----------------|------------------------------------------|--------------|
+| CRU TS 4.09     | Climate Research Unit · monthly climate data 1901–2024 | Laboratory 1, Assignment 1 |
+| cultivos.xlsx   | SIAP · agricultural production in Mexico | Laboratory 2, Assignment 2 |
+| Macroeconomic indicators | Inflation · GDP · monetary policy | Laboratory 4 (coming soon) |
 
-* **CRU Climate Data** (Climate Research Unit)
-* **SIAP Agricultural Production Data** (Mexico)
-* **Macroeconomic time series**
-
-Additional datasets may be incorporated during the semester.
+The CRU dataset is downloaded directly from the [CRU website](https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.09/) during the lab session. All other datasets are included in the `Data/` folder.
 
 ---
 
@@ -91,21 +103,22 @@ Additional datasets may be incorporated during the semester.
 
 ## 🛠️ Requirements
 
-* [R](https://cran.r-project.org/) (version 4.0 or higher)
-* [RStudio](https://posit.co/download/rstudio-desktop/)
+- [R](https://cran.r-project.org/) (version 4.0 or higher)
+- [RStudio](https://posit.co/download/rstudio-desktop/)
 
 Main packages used in the course:
 
-* `tidyverse`
-* `ggplot2`
-* `dplyr`
-* `forecast`
-* `lmtest`
+- `tidyverse`
+- `readr`
+- `ggplot2`
+- `dplyr`
+- `forecast`
+- `lmtest`
 
 Install all packages at once:
 
 ```r
-install.packages(c("tidyverse", "ggplot2", "dplyr", "forecast", "lmtest"))
+install.packages(c("tidyverse", "readr", "ggplot2", "dplyr", "forecast", "lmtest"))
 ```
 
 ---
@@ -124,6 +137,8 @@ git clone https://github.com/araceli-martinez-holguin/economics-r-course.git
 
 4. Run chunks in order or **Knit to HTML** to reproduce the full laboratory report
 
+5. For assignments, open the corresponding `.Rmd` file in `Assignments/`, complete the code and interpretations, and knit to HTML
+
 ---
 
 ## 📈 Student Projects
@@ -132,11 +147,11 @@ Toward the end of the semester, students complete a short **empirical economic p
 
 Projects typically include:
 
-* Data cleaning and preparation
-* Exploratory data analysis
-* Data visualization
-* Basic econometric analysis
-* Interpretation of results in a reproducible report
+- Data cleaning and preparation
+- Exploratory data analysis
+- Data visualization
+- Basic econometric analysis
+- Interpretation of results in a reproducible report
 
 Students submit their work as **R Markdown reports**.
 
@@ -144,14 +159,7 @@ Students submit their work as **R Markdown reports**.
 
 ## 🔁 Reproducibility
 
-All laboratories are written in **R Markdown**, allowing students to combine:
-
-* code
-* results
-* figures
-* economic interpretation
-
-in a single reproducible document.
+All laboratories and assignments are written in **R Markdown**, allowing students to combine code, results, figures, and economic interpretation in a single reproducible document.
 
 ---
 
