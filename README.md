@@ -39,7 +39,8 @@ By the end of the course students should be able to:
 economics-r-course/
 ├── Laboratories/              # Guided R Markdown labs (.Rmd + rendered .html)
 │   ├── Laboratory-0/          # Types of objects in R
-│   └── Laboratory-1/          # Analyzing climate variables (CRU data)
+│   ├── Laboratory-1/          # Analyzing climate variables (CRU data)
+│   └── Laboratory-2/          # Agricultural data with dplyr (SIAP · TMEC)
 ├── Assignments/               # Student assignment prompts and templates
 │   └── Assignment-1.Rmd       # Homework based on Laboratory 1
 ├── Data/                      # Datasets used across labs and assignments
@@ -56,7 +57,7 @@ economics-r-course/
 |--------------|------------------------------------|---------------|------|
 | Laboratory 0 | Types of objects in R              | ✅ Available  | [View](https://araceli-martinez-holguin.github.io/economics-r-course/Laboratories/Laboratory-0/Laboratory-0.html) |
 | Laboratory 1 | Analyzing climate variables (CRU)  | ✅ Available  | [View](https://araceli-martinez-holguin.github.io/economics-r-course/Laboratories/Laboratory-1/Laboratory-1.html) |
-| Laboratory 2 | Agricultural data with dplyr       | 🔜 Coming soon | — |
+| Laboratory 2 | Agricultural data with dplyr       | ✅ Available  | [View](https://araceli-martinez-holguin.github.io/economics-r-course/Laboratories/Laboratory-2/Laboratory-2.html) |
 | Laboratory 3 | Spatial analysis in R              | 🔜 Coming soon | — |
 | Laboratory 4 | Time series analysis               | 🔜 Coming soon | — |
 
