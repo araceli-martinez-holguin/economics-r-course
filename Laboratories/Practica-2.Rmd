@@ -1,0 +1,976 @@
+---
+title: "Práctica 2: Evaluación de los Cultivos de Exportación Mexicanos para la Negociación del TMEC"
+author: "Araceli Martinez Holguín"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    theme: flatly
+    highlight: tango
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.width  = 12,
+  fig.height = 8
+)
+```
+
+---
+
+> **Contexto:** El T-MEC será renegociado en 2026. El equipo debe identificar qué productos agrícolas de exportación proteger, cuáles impulsar y cuáles presentan vulnerabilidades.
+>
+> **Datos:** Principales cultivos de exportación 2003–2024 (SIAP)  
+> **Fuente:** <https://nube.agricultura.gob.mx/cierre_agricola/>
+
+---
+
+**Objetivos:**
+
+- Dominar verbos centrales de `dplyr`: `filter`, `group_by`, `summarise`, `mutate`, `arrange`, `left_join`, `case_when`, `pivot_wider` / `pivot_longer`
+- Graficar con `ggplot2`
+- Crear mapas estáticos con `sf` + `ggplot2`
+- Aprender a iterar con loops (`for`) para automatizar visualizaciones
+- Crear GIFs
+
+---
+
+# Configuración Inicial {.tabset}
+
+## Instalación de librerías
+
+```{r install, eval=FALSE}
+install.packages(c("tidyr", "dplyr", "readxl", "ggplot2",
+                   "RColorBrewer", "devtools", "gganimate", "gifski",
+                   "sf", "scales", "stringi"))
+
+# Para instalar ggradar (radar plot)
+# devtools::install_github("ricardo-bion/ggradar")
+```
+
+## Carga de librerías
+
+```{r libraries}
+library(tidyr)
+library(dplyr)
+library(readxl)
+library(ggplot2)
+library(RColorBrewer)
+library(ggradar)
+library(gganimate)
+library(gifski)
+library(sf)
+library(scales)
+library(stringi)
+```
+
+## Lectura de datos
+
+```{r load-data}
+# Establecer directorio de trabajo
+setwd("~/Documents/Cursos-R/Laboratorio-2")
+
+# Leer el archivo Excel
+data <- read_xlsx("cultivos.xlsx")
+
+# Vistazo general
+glimpse(data)
+```
+
+```{r structure}
+# Observa la estructura
+str(data)
+```
+
+```{r colnames}
+# Nombre de las columnas
+colnames(data)
+```
+
+Las variables disponibles en la base son:
+
+| Variable | Descripción |
+|---|---|
+| `Anio` | Año del registro |
+| `Idestado` / `Nomestado` | ID y nombre de la entidad federativa |
+| `Idddr` / `Nomddr` | ID y nombre del Distrito de Desarrollo Rural |
+| `Idcader` / `Nomcader` | ID y nombre del Centro de Apoyo al Desarrollo Rural |
+| `Idmunicipio` / `Nommunicipio` | ID y nombre del municipio |
+| `Idciclo` / `Nomcicloproductivo` | ID y nombre del ciclo agrícola |
+| `Idmodalidad` / `Nommodalidad` | ID y nombre de la modalidad de producción (riego) |
+| `Idunidadmedida` / `Nomunidad` | ID y nombre de la unidad de medida (toneladas) |
+| `Idcultiv` / `Nomcultivo` | ID y nombre del cultivo |
+| `Sembrada` | Superficie sembrada (hectáreas) |
+| `Cosechada` | Superficie cosechada (hectáreas) |
+| `Siniestrada` | Superficie siniestrada (hectáreas) |
+| `Volumenproduccion` | Volumen de producción (toneladas) |
+| `Rendimiento` | Rendimiento (ton/ha) = Volumen / Superficie Cosechada |
+| `Precio` | Precio medio rural (pesos/tonelada) |
+| `Valorproduccion` | Valor de la producción (miles de pesos) |
+
+```{r cultivos-unicos}
+# Cultivos únicos en la base, ordenados alfabéticamente
+sort(unique(data$Nomcultivo), decreasing = FALSE)
+```
+
+---
+
+# Sección 1 — Diagnóstico Productivo
+
+> **Preguntas:**  
+> 1A. ¿Cuál es el volumen de producción para cada cultivo?  
+> 1B. ¿Cuánto aporta cada cultivo en valor?  
+> 1C. ¿Cuánto ocupa de superficie cada cultivo?  
+> 1D. ¿Qué rendimiento tiene cada cultivo?  
+> 1E. ¿Qué precio tiene cada cultivo?
+
+```{r participacion}
+# Dataframe con participaciones acumuladas por cultivo
+participacion <- data %>%
+  group_by(Nomcultivo) %>%
+  summarise(
+    volumen_acumulado  = sum(Volumenproduccion, na.rm = TRUE),
+    valor_acumulado    = sum(Valorproduccion,   na.rm = TRUE),
+    sembrada_acumulada = sum(Sembrada,          na.rm = TRUE)
+  ) %>%
+  mutate(
+    participacion_volumen  = round(volumen_acumulado  / sum(volumen_acumulado)  * 100, 2),
+    participacion_valor    = round(valor_acumulado    / sum(valor_acumulado)    * 100, 2),
+    participacion_sembrada = round(sembrada_acumulada / sum(sembrada_acumulada) * 100, 2)
+  ) %>%
+  arrange(desc(participacion_valor))
+
+participacion
+```
+
+## Gráfica 1A: Volumen de Producción
+
+```{r graf-1a}
+participacion_volumen <- ggplot(participacion,
+  aes(x = reorder(Nomcultivo, participacion_volumen),
+      y = participacion_volumen,
+      fill = participacion_volumen)) +
+  geom_col(show.legend = FALSE) +
+  geom_text(aes(label = paste0(participacion_volumen, "%")),
+            hjust = -0.1, size = 3.2) +
+  coord_flip() +
+  scale_fill_gradient(low = "#b7e4c7", high = "#1b4332") +
+  scale_y_continuous(limits = c(0, max(participacion$participacion_volumen) * 1.15)) +
+  labs(
+    title    = "Participación del Volumen de Producción en el Volumen Total Exportable",
+    subtitle = "México 2003-2024 | Acumulado",
+    x        = NULL,
+    y        = "Participación (%)"
+  ) +
+  theme_minimal(base_size = 12)
+
+ggsave("participacion_volumen.png", participacion_volumen, dpi = 300, width = 12, height = 10)
+participacion_volumen
+```
+
+## Gráfica 1B: Valor de Producción
+
+```{r graf-1b}
+participacion_valor <- ggplot(participacion,
+  aes(x = reorder(Nomcultivo, participacion_valor),
+      y = participacion_valor,
+      fill = participacion_valor)) +
+  geom_col(show.legend = FALSE) +
+  geom_text(aes(label = paste0(participacion_valor, "%")),
+            hjust = -0.1, size = 3.2) +
+  coord_flip() +
+  scale_fill_gradient(low = "indianred1", high = "indianred4") +
+  scale_y_continuous(limits = c(0, max(participacion$participacion_valor) * 1.15)) +
+  labs(
+    title    = "Participación del Valor en el Valor Total Exportable",
+    subtitle = "México 2003-2024 | Acumulado",
+    x        = NULL,
+    y        = "Participación (%)"
+  ) +
+  theme_minimal(base_size = 12)
+
+ggsave("participacion_valor.png", participacion_valor, dpi = 300, width = 12, height = 10)
+participacion_valor
+```
+
+## Gráfica 1C: Superficie Sembrada
+
+```{r graf-1c}
+participacion_sembrada <- ggplot(participacion,
+  aes(x = reorder(Nomcultivo, participacion_sembrada),
+      y = participacion_sembrada,
+      fill = participacion_sembrada)) +
+  geom_col(show.legend = FALSE) +
+  geom_text(aes(label = paste0(participacion_sembrada, "%")),
+            hjust = -0.1, size = 3.2) +
+  coord_flip() +
+  scale_fill_gradient(low = "hotpink", high = "hotpink4") +
+  scale_y_continuous(limits = c(0, max(participacion$participacion_sembrada) * 1.15)) +
+  labs(
+    title    = "Participación de la Superficie Sembrada en el Total de la Superficie Sembrada Exportable",
+    subtitle = "México 2003-2024 | Acumulado",
+    x        = NULL,
+    y        = "Participación (%)"
+  ) +
+  theme_minimal(base_size = 12)
+
+ggsave("participacion_sembrada.png", participacion_sembrada, dpi = 300, width = 12, height = 10)
+participacion_sembrada
+```
+
+## Ejercicio 1
+
+> **Ejercicio 1D:** ¿Qué rendimiento tiene cada cultivo?  
+> **Ejercicio 1E:** ¿Qué precio tiene cada cultivo?
+
+```{r ejercicio-1, eval=FALSE}
+# Tu código aquí
+```
+
+---
+
+# Sección 2 — Municipios y Estados por Cultivo
+
+> **Preguntas:**  
+> 2A. ¿Cuántos municipios producen cada cultivo?  
+> 2B. ¿Cuántos estados producen cada cultivo?
+
+```{r municipios-cultivo}
+# Número de municipios por cultivo y año
+municipios_cultivo <- data %>%
+  group_by(Anio, Nomcultivo) %>%
+  summarise(
+    num_municipios = n_distinct(Nommunicipio),
+    .groups = "drop"
+  )
+
+# Formato ancho (wide)
+municipios_wide <- municipios_cultivo %>%
+  pivot_wider(
+    names_from  = Anio,
+    values_from = num_municipios
+  ) %>%
+  arrange(Nomcultivo)
+
+municipios_wide
+```
+
+## Gráfica 2A: Municipios Productores por Cultivo
+
+```{r graf-2a}
+municipios_plot <- ggplot(municipios_cultivo,
+  aes(x = Anio, y = num_municipios,
+      color = Nomcultivo, group = Nomcultivo)) +
+  geom_line(linewidth = 0.8) +
+  geom_point(size = 1.8) +
+  scale_x_continuous(breaks = seq(2003, 2024, by = 2)) +
+  scale_color_manual(values = colorRampPalette(
+    RColorBrewer::brewer.pal(12, "Set3"))(14)) +
+  labs(
+    title    = "Municipios Productores por Cultivo y Año",
+    subtitle = "México 2003–2024",
+    x        = "Año",
+    y        = "Número de municipios",
+    color    = "Cultivo"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.x     = element_text(angle = 45, hjust = 1),
+    legend.position = "right",
+    legend.text     = element_text(size = 9)
+  )
+
+ggsave("municipios_por_cultivo.png", municipios_plot, dpi = 300, width = 14, height = 8)
+municipios_plot
+```
+
+## Gráfica 2A1: Participación de Municipios por Cultivo
+
+```{r graf-2a1}
+# Calcular porcentajes
+municipios_par_cultivo <- municipios_cultivo %>%
+  group_by(Anio) %>%
+  mutate(
+    total_anio = sum(num_municipios, na.rm = TRUE),
+    pct        = num_municipios / total_anio
+  ) %>%
+  ungroup() %>%
+  arrange(Anio, desc(pct))
+
+municipios_par_plot <- ggplot(
+  municipios_par_cultivo %>%
+    group_by(Anio) %>%
+    arrange(desc(pct), .by_group = TRUE),
+  aes(
+    x    = factor(Anio),
+    y    = pct,
+    fill = Nomcultivo,
+    group = interaction(Anio, reorder(Nomcultivo, pct))
+  )
+) +
+  geom_bar(stat = "identity", position = "stack") +
+  geom_text(
+    aes(label = ifelse(pct > 0.02, scales::percent(pct, accuracy = 0.1), NA)),
+    position = position_stack(vjust = 0.5),
+    size = 2.5,
+    na.rm = TRUE
+  ) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  scale_x_discrete(drop = FALSE) +
+  scale_fill_manual(values = colorRampPalette(
+    RColorBrewer::brewer.pal(12, "Set3"))(14)) +
+  labs(
+    title    = "Participación de Municipios Productores por Cultivo y Año",
+    subtitle = "México 2003–2024",
+    x        = "Año",
+    y        = "Porcentaje de municipios",
+    fill     = "Cultivo"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title      = element_text(hjust = 0.5),
+    plot.subtitle   = element_text(hjust = 0.5),
+    axis.text.x     = element_text(angle = 45, hjust = 1),
+    legend.position = "right",
+    legend.text     = element_text(size = 9)
+  )
+
+ggsave("municipios_par_plot.png", municipios_par_plot, dpi = 300, width = 14, height = 8)
+municipios_par_plot
+```
+
+## Gráfica 2A2: Radar — Municipios Productores por Cultivo (GIF animado)
+
+```{r graf-2a2-radar}
+# Transformar para radar
+radar_data <- municipios_par_cultivo %>%
+  select(Anio, Nomcultivo, pct) %>%
+  pivot_wider(names_from = Nomcultivo, values_from = pct, values_fill = 0) %>%
+  arrange(Anio)
+
+radar_values <- radar_data %>%
+  select(-Anio) %>%
+  mutate(across(everything(), as.numeric))
+
+radar_data_fixed <- radar_values
+radar_data_fixed$group <- as.character(radar_data$Anio)
+radar_data_fixed <- radar_data_fixed %>% select(group, everything())
+
+# Paleta de colores
+anios  <- as.numeric(radar_data$Anio)
+colores <- colorRampPalette(brewer.pal(12, "Set3"))(length(anios))
+
+# Crear frames del radar
+dir.create("frames_radar", showWarnings = FALSE)
+unlink(list.files("frames_radar", full.names = TRUE), recursive = FALSE)
+
+for (i in seq_along(anios)) {
+  anio_i  <- anios[i]
+  datos_i <- radar_data_fixed %>% slice(i)
+
+  p <- ggradar(
+    datos_i,
+    values.radar     = c("0%", "15%", "30%"),
+    grid.min         = 0,
+    grid.mid         = 0.15,
+    grid.max         = 0.30,
+    group.colours    = colores[i],
+    group.line.width = 1.5,
+    group.point.size = 3,
+    axis.label.size  = 3,
+    grid.label.size  = 4,
+    legend.position  = "none",
+    plot.title       = paste0("Municipios Productores por Cultivo\nMéxico — ", anio_i)
+  ) +
+    theme_minimal() +
+    theme(
+      plot.title      = element_text(hjust = 0.5, size = 10, face = "plain"),
+      legend.position = "none"
+    )
+
+  ggsave(
+    filename = file.path("frames_radar", sprintf("frame_%02d.png", i)),
+    plot = p, width = 10, height = 8, dpi = 300
+  )
+}
+
+# Generar GIF
+frames <- list.files("frames_radar", full.names = TRUE, pattern = "frame_.*png")
+gifski(
+  png_files = frames,
+  gif_file  = "radar_municipios.gif",
+  width     = 1500,
+  height    = 1200,
+  delay     = 1.5
+)
+
+message("✓ GIF guardado: radar_municipios.gif")
+```
+
+## Ejercicio 2
+
+> **Ejercicio 2B:** Reproducir los análisis anteriores para los **estados**.
+
+```{r ejercicio-2, eval=FALSE}
+# Tu código aquí
+```
+
+---
+
+# Sección 3 — Crecimiento con Escala Pseudo-log y Clasificación Granular
+
+```{r crecimiento-prep}
+primer_anio <- min(data$Anio, na.rm = TRUE)
+ultimo_anio <- max(data$Anio, na.rm = TRUE)
+
+# Mediana por cultivo
+medianas <- data %>%
+  group_by(Nomcultivo) %>%
+  summarise(mediana_total = median(Valorproduccion, na.rm = TRUE), .groups = "drop")
+
+# Crecimiento entre primer y último año
+crecimiento_total <- data %>%
+  filter(Anio %in% c(primer_anio, ultimo_anio)) %>%
+  group_by(Nomcultivo, Anio) %>%
+  summarise(produccion = mean(Valorproduccion, na.rm = TRUE), .groups = "drop") %>%
+  pivot_wider(names_from = Anio, values_from = produccion, names_prefix = "anio_") %>%
+  rename(
+    produccion_inicial = !!sym(paste0("anio_", primer_anio)),
+    produccion_final   = !!sym(paste0("anio_", ultimo_anio))
+  ) %>%
+  left_join(medianas, by = "Nomcultivo") %>%
+  mutate(
+    produccion_inicial = if_else(is.na(produccion_inicial), mediana_total, produccion_inicial),
+    produccion_final   = if_else(is.na(produccion_final),   mediana_total, produccion_final),
+    crecimiento_pct    = (produccion_final / produccion_inicial - 1) * 100
+  ) %>%
+  filter(produccion_inicial > 0, is.finite(crecimiento_pct)) %>%
+  select(-mediana_total)
+```
+
+```{r crecimiento-clasificacion}
+# Siete clasificaciones de crecimiento
+crecimiento_total <- crecimiento_total %>%
+  mutate(
+    clasificacion = case_when(
+      crecimiento_pct >= 1000  ~ "Crecimiento explosivo (≥1000%)",
+      crecimiento_pct >= 200   ~ "Crecimiento muy alto (200-999%)",
+      crecimiento_pct >= 50    ~ "Crecimiento alto (50-199%)",
+      crecimiento_pct >= 10    ~ "Crecimiento moderado (10-49%)",
+      crecimiento_pct >= 0     ~ "Crecimiento leve (0-9%)",
+      crecimiento_pct >= -20   ~ "Declive leve (-20% a -0.1%)",
+      TRUE                     ~ "Declive severo (< -20%)"
+    )
+  )
+
+# Orden de categorías
+orden_categorias <- c(
+  "Crecimiento explosivo (≥1000%)",
+  "Crecimiento muy alto (200-999%)",
+  "Crecimiento alto (50-199%)",
+  "Crecimiento moderado (10-49%)",
+  "Crecimiento leve (0-9%)",
+  "Declive leve (-20% a -0.1%)",
+  "Declive severo (< -20%)"
+)
+crecimiento_total$clasificacion <- factor(crecimiento_total$clasificacion, levels = orden_categorias)
+
+# Paleta de colores
+colores_categorias <- c(
+  "Crecimiento explosivo (≥1000%)"  = "#00441B",
+  "Crecimiento muy alto (200-999%)" = "#006D2C",
+  "Crecimiento alto (50-199%)"      = "#238B45",
+  "Crecimiento moderado (10-49%)"   = "#66C2A4",
+  "Crecimiento leve (0-9%)"         = "#BAE4B3",
+  "Declive leve (-20% a -0.1%)"     = "#FCAE91",
+  "Declive severo (< -20%)"         = "#CB181D"
+)
+```
+
+## Gráfica 3: Crecimiento del Volumen de Producción (escala pseudo-log)
+
+```{r graf-3}
+crecimiento_plot <- ggplot(crecimiento_total,
+  aes(x    = reorder(Nomcultivo, crecimiento_pct),
+      y    = crecimiento_pct,
+      fill = clasificacion)) +
+  geom_col(width = 0.7) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "gray30", linewidth = 0.8) +
+  geom_text(aes(label = round(crecimiento_pct, 1)),
+            hjust = -0.1, size = 3, color = "black") +
+  coord_flip() +
+  scale_y_continuous(
+    trans  = pseudo_log_trans(sigma = 0.1),
+    breaks = c(-50, 0, 50, 100, 500, 1000, 5000, 10000, 20000, 50000),
+    labels = comma_format(accuracy = 1),
+    limits = c(-50, 55000),
+    expand = expansion(mult = c(0.02, 0.15))
+  ) +
+  scale_fill_manual(values = colores_categorias, name = "Clasificación") +
+  labs(
+    title    = "Crecimiento del Volumen de Producción por Cultivo",
+    subtitle = paste(primer_anio, "--", ultimo_anio),
+    x        = "Crecimiento (%) – escala pseudo‑logarítmica",
+    y        = NULL,
+    caption  = "Nota: Valores faltantes imputados con mediana del cultivo (todos los años).\nCultivos con producción inicial imputada ≤ 0 excluidos."
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title    = element_text(face = "bold", size = 14, hjust = 0.5),
+    plot.subtitle = element_text(color = "gray40", hjust = 0.5),
+    axis.text.y   = element_text(size = 10),
+    axis.text.x   = element_text(angle = 45, hjust = 1, vjust = 1),
+    legend.position = "top",
+    legend.box    = "vertical",
+    panel.grid    = element_blank()
+  )
+
+ggsave("crecimiento_final.png", crecimiento_plot, dpi = 300, width = 14, height = 10)
+crecimiento_plot
+```
+
+## Ejercicio 3
+
+> **Ejercicio 3A:** Reproducir para el **valor de la producción**.
+
+```{r ejercicio-3, eval=FALSE}
+# Tu código aquí
+```
+
+---
+
+# Sección 4 — Mapas de Producción por Cultivo y Estado
+
+## Preparación: Cargar y estandarizar el Shapefile
+
+```{r shapefile}
+# Leer shapefile (los archivos .shp, .dbf, .shx y .prj deben estar en la misma carpeta)
+estados_sf <- st_read("00ent.shp")
+glimpse(estados_sf)
+```
+
+```{r estandarizar-nombres}
+# Estandarizar nombres de entidades federativas en la base de datos
+data <- data %>%
+  mutate(Nomestado = case_when(
+    Nomestado %in% c("Michoacán", "Michoacán de Ocampo")                            ~ "Michoacán de Ocampo",
+    Nomestado %in% c("Ciudad de México / DF", "Ciudad de México")                   ~ "Ciudad de México",
+    Nomestado %in% c("Coahuila", "Coahuila de Zaragoza")                            ~ "Coahuila de Zaragoza",
+    Nomestado %in% c("Veracruz", "Veracruz de Ignacio de la Llave")                 ~ "Veracruz de Ignacio de la Llave",
+    TRUE ~ Nomestado
+  ))
+
+# Quitar acentos y convertir a mayúsculas para el join (Shapefile)
+estados_sf <- estados_sf %>%
+  mutate(
+    nom_join = stri_trans_general(NOMGEO, "Latin-ASCII") %>%
+      toupper() %>%
+      trimws()
+  )
+
+# Replicar para el dataframe
+data <- data %>%
+  mutate(
+    nom_join = stri_trans_general(Nomestado, "Latin-ASCII") %>%
+      toupper() %>%
+      trimws()
+  )
+```
+
+## Gráfica 4A: Mapa de Producción Total por Estado (2024)
+
+```{r graf-4a}
+prod_estado_2024 <- data %>%
+  filter(Anio == 2024) %>%
+  group_by(nom_join) %>%
+  summarise(
+    produccion_total = sum(Volumenproduccion, na.rm = TRUE),
+    valor_total      = sum(Valorproduccion,   na.rm = TRUE),
+    .groups = "drop"
+  )
+
+mapa_total <- estados_sf %>%
+  left_join(prod_estado_2024, by = "nom_join")
+
+mapa_prod_total <- ggplot(mapa_total) +
+  geom_sf(aes(fill = produccion_total), color = "white", linewidth = 0.3) +
+  scale_fill_gradient(
+    low      = "#d8f3dc",
+    high     = "#1b4332",
+    na.value = "gray90",
+    name     = "Producción\n(ton)",
+    labels   = comma
+  ) +
+  labs(
+    title    = "Producción Agrícola Total por Estado (2024)",
+    subtitle = "Suma del volumen de producción de todos los cultivos exportables",
+    caption  = "Fuente: SIAP"
+  ) +
+  theme_void(base_size = 12) +
+  theme(
+    plot.title      = element_text(face = "bold", hjust = 0.5),
+    plot.subtitle   = element_text(hjust = 0.5, color = "gray40"),
+    legend.position = "right"
+  )
+
+ggsave("mapa_produccion_total_2024.png", mapa_prod_total, dpi = 300, width = 12, height = 8)
+mapa_prod_total
+```
+
+> **Ejercicio 4A:** Reproducir para el **valor de la producción**.
+
+## Gráfica 4B: Mapa Facet por Cultivo (2024)
+
+```{r graf-4b}
+prod_estado_cultivo <- data %>%
+  filter(Anio == 2024) %>%
+  group_by(nom_join, Nomcultivo) %>%
+  summarise(
+    produccion = sum(Volumenproduccion, na.rm = TRUE),
+    valor      = sum(Valorproduccion,   na.rm = TRUE),
+    .groups    = "drop"
+  )
+
+# cross_join para que estados sin cultivo aparezcan en gris (NA)
+mapa_cultivos <- estados_sf %>%
+  cross_join(tibble(Nomcultivo = unique(prod_estado_cultivo$Nomcultivo))) %>%
+  left_join(prod_estado_cultivo, by = c("nom_join", "Nomcultivo"))
+
+mapa_facet <- ggplot(mapa_cultivos) +
+  geom_sf(aes(fill = produccion), color = "white", linewidth = 0.15) +
+  scale_fill_gradient(
+    low      = "#fff3b0",
+    high     = "#c1121f",
+    na.value = "gray92",
+    name     = "Producción\n(ton)",
+    labels   = comma,
+    trans    = "sqrt"  # escala raíz cuadrada para suavizar outliers
+  ) +
+  facet_wrap(~ Nomcultivo, ncol = 4) +
+  labs(
+    title    = "Producción por Cultivo y Estado (2024)",
+    subtitle = "Escala raíz cuadrada para manejar diferencias de magnitud",
+    caption  = "Fuente: SIAP"
+  ) +
+  theme_void(base_size = 9) +
+  theme(
+    plot.title    = element_text(face = "bold", hjust = 0.5, size = 13),
+    plot.subtitle = element_text(hjust = 0.5, color = "gray40", size = 10),
+    strip.text    = element_text(face = "bold", size = 7.5),
+    legend.position = "right"
+  )
+
+ggsave("mapa_cultivos_facet_2024.png", mapa_facet, dpi = 300, width = 20, height = 18)
+mapa_facet
+```
+
+> **Ejercicio 4B:** Reproducir para el **valor de la producción**.
+
+## Gráfica 4C: Estados Líderes por Número de Cultivos (2020–2024)
+
+```{r graf-4c}
+# Estado con mayor producción por cultivo (2020-2024)
+estado_lider <- data %>%
+  filter(Anio >= 2020) %>%
+  group_by(Nomcultivo, nom_join) %>%
+  summarise(produccion = sum(Valorproduccion, na.rm = TRUE), .groups = "drop") %>%
+  group_by(Nomcultivo) %>%
+  slice_max(produccion, n = 1, with_ties = FALSE) %>%
+  ungroup()
+
+liderazgo_estado <- estado_lider %>%
+  group_by(nom_join) %>%
+  summarise(
+    cultivos_liderados = n(),
+    cultivos           = paste(Nomcultivo, collapse = "\n"),
+    .groups = "drop"
+  )
+
+mapa_liderazgo <- estados_sf %>%
+  left_join(liderazgo_estado, by = "nom_join") %>%
+  mutate(cultivos_liderados = factor(cultivos_liderados, levels = c("1", "2", "3")))
+
+colores_discretos <- c(
+  "1" = "#c6dbef",
+  "2" = "#6baed6",
+  "3" = "#08519c"
+)
+
+contorno_nacional <- estados_sf %>%
+  st_union() %>%
+  st_boundary()
+
+mapa_lider_plot <- ggplot() +
+  geom_sf(data = mapa_liderazgo,
+          aes(fill = cultivos_liderados),
+          color = "white", linewidth = 0.3) +
+  geom_sf(data = contorno_nacional,
+          color = "black", linewidth = 0.8, fill = NA) +
+  scale_fill_manual(
+    values   = colores_discretos,
+    na.value = "gray90",
+    name     = "N° cultivos\nliderados"
+  ) +
+  labs(
+    title    = "Estados Líderes de Producción por Número de Cultivos (2020-2024)",
+    subtitle = "Cada color representa la cantidad de cultivos donde el estado es el principal productor",
+    caption  = "Fuente: SIAP"
+  ) +
+  theme_void(base_size = 12) +
+  theme(
+    plot.title    = element_text(face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5, color = "gray40"),
+    legend.position = "right"
+  )
+
+ggsave("mapa_liderazgo_estados.png", mapa_lider_plot, dpi = 300, width = 12, height = 8)
+mapa_lider_plot
+```
+
+> **Ejercicio 4C:** Reproducir para el **valor de la producción**.
+
+---
+
+# Sección 5 — Mapas Animados y Loop Facet
+
+## Configuración inicial
+
+```{r config-loops}
+# Crear carpetas de salida
+dir.create("mapas_anuales",          showWarnings = FALSE)
+dir.create("mapas_anuales/total",    showWarnings = FALSE)
+dir.create("mapas_anuales/facet",    showWarnings = FALSE)
+dir.create("mapas_anuales/por_cultivo", showWarnings = FALSE)
+
+anios         <- sort(unique(data$Anio))
+cultivos_lista <- sort(unique(data$Nomcultivo))
+
+# Rangos fijos para escalas consistentes
+rango_total <- data %>%
+  group_by(Anio, nom_join) %>%
+  summarise(prod = sum(Volumenproduccion, na.rm = TRUE), .groups = "drop") %>%
+  summarise(min = min(prod, na.rm = TRUE), max = max(prod, na.rm = TRUE))
+
+rango_cultivos <- data %>%
+  group_by(Nomcultivo, nom_join, Anio) %>%
+  summarise(prod = sum(Volumenproduccion, na.rm = TRUE), .groups = "drop") %>%
+  group_by(Nomcultivo) %>%
+  summarise(max_prod = max(prod, na.rm = TRUE), .groups = "drop")
+```
+
+## 5A — Loop: Mapa Total por Año → GIF
+
+```{r loop-5a}
+for (anio_i in anios) {
+  datos_anio <- data %>%
+    filter(Anio == anio_i) %>%
+    group_by(nom_join) %>%
+    summarise(produccion_total = sum(Volumenproduccion, na.rm = TRUE), .groups = "drop")
+
+  mapa_i <- estados_sf %>%
+    left_join(datos_anio, by = "nom_join")
+
+  p <- ggplot(mapa_i) +
+    geom_sf(aes(fill = produccion_total), color = "white", linewidth = 0.3) +
+    scale_fill_viridis_c(
+      name     = "Producción\n(ton)",
+      labels   = comma,
+      na.value = "gray90",
+      option   = "viridis"
+    ) +
+    labs(
+      title    = paste("Producción Agrícola Total por Estado —", anio_i),
+      subtitle = "Suma de todos los cultivos exportables | Escala viridis flexible",
+      caption  = "Fuente: SIAP"
+    ) +
+    theme_void(base_size = 12) +
+    theme(
+      plot.title       = element_text(face = "bold", hjust = 0.5),
+      plot.subtitle    = element_text(hjust = 0.5, color = "gray40"),
+      legend.position  = "right",
+      legend.key.width  = unit(1.2, "cm"),
+      legend.key.height = unit(1.5, "cm"),
+      legend.text      = element_text(size = 10),
+      legend.title     = element_text(size = 11)
+    )
+
+  ggsave(sprintf("mapas_anuales/total/mapa_total_%d.png", anio_i),
+         p, dpi = 150, width = 12, height = 8)
+  message(sprintf("  Guardado: mapa_total_%d.png", anio_i))
+}
+message("✅ Loop 5A completado")
+
+# Convertir a GIF
+carpeta  <- "mapas_anuales/total/"
+archivos <- list.files(carpeta, pattern = "mapa_total_.*\\.png$", full.names = TRUE)
+anios_ord <- as.numeric(gsub(".*mapa_total_([0-9]+)\\.png", "\\1", basename(archivos)))
+archivos  <- archivos[order(anios_ord)]
+
+gifski(
+  png_files = archivos,
+  gif_file  = "produccion_total_animado.gif",
+  width     = 900,
+  height    = 600,
+  delay     = 0.5
+)
+message("✅ GIF creado: produccion_total_animado.gif")
+```
+
+> **Ejercicio 5A:** Reproducir para el **valor de la producción**.
+
+## 5B — Loop: Mapa Facet por Año → GIF
+
+```{r loop-5b}
+for (anio_i in anios) {
+  datos_anio_cultivo <- data %>%
+    filter(Anio == anio_i) %>%
+    group_by(nom_join, Nomcultivo) %>%
+    summarise(produccion = sum(Volumenproduccion, na.rm = TRUE), .groups = "drop")
+
+  cultivos_anio <- unique(datos_anio_cultivo$Nomcultivo)
+  mapa_facet_i  <- estados_sf %>%
+    cross_join(tibble(Nomcultivo = cultivos_anio)) %>%
+    left_join(datos_anio_cultivo, by = c("nom_join", "Nomcultivo"))
+
+  p <- ggplot(mapa_facet_i) +
+    geom_sf(aes(fill = produccion), color = "white", linewidth = 0.2) +
+    scale_fill_viridis_c(
+      name     = "Producción\n(ton)",
+      labels   = comma,
+      option   = "viridis",
+      na.value = "gray95"
+    ) +
+    facet_wrap(~ Nomcultivo, ncol = 4) +
+    labs(
+      title    = paste("Distribución Geográfica de Cultivos por Estado —", anio_i),
+      subtitle = "Cada panel representa un cultivo | Escala viridis (flexible)",
+      caption  = "Fuente: SIAP"
+    ) +
+    theme_void(base_size = 9) +
+    theme(
+      plot.title       = element_text(face = "bold", hjust = 0.5, size = 12),
+      plot.subtitle    = element_text(hjust = 0.5, color = "gray40", size = 9),
+      strip.text       = element_text(face = "bold", size = 7),
+      legend.position  = "bottom",
+      legend.key.width  = unit(1.5, "cm"),
+      legend.key.height = unit(0.5, "cm"),
+      legend.text      = element_text(size = 10),
+      legend.title     = element_text(size = 11)
+    )
+
+  ggsave(sprintf("mapas_anuales/facet/mapa_facet_%d.png", anio_i),
+         p, dpi = 150, width = 14, height = 12)
+  message(sprintf("  Guardado: mapa_facet_%d.png", anio_i))
+}
+
+# Convertir a GIF
+carpeta  <- "mapas_anuales/facet/"
+archivos <- list.files(carpeta, pattern = "mapa_facet_.*\\.png$", full.names = TRUE)
+anios_ord <- as.numeric(gsub(".*mapa_facet_([0-9]+)\\.png", "\\1", basename(archivos)))
+archivos  <- archivos[order(anios_ord)]
+
+gifski(
+  png_files = archivos,
+  gif_file  = "mapa_facet_animado.gif",
+  width     = 1000,
+  height    = 800,
+  delay     = 0.8
+)
+message("✅ GIF creado: mapa_facet_animado.gif")
+```
+
+> **Ejercicio 5B:** Reproducir para el **valor de la producción**.
+
+## 5C — Loop: Mapa por Cultivo Individual → GIF
+
+```{r loop-5c}
+anios_por_imagen <- 6
+grupos_anios     <- split(anios, ceiling(seq_along(anios) / anios_por_imagen))
+
+for (cultivo_i in cultivos_lista) {
+  datos_cultivo <- data %>%
+    filter(Nomcultivo == cultivo_i) %>%
+    group_by(nom_join, Anio) %>%
+    summarise(produccion = sum(Volumenproduccion, na.rm = TRUE), .groups = "drop")
+
+  for (g in seq_along(grupos_anios)) {
+    anios_grupo  <- grupos_anios[[g]]
+    rango_grupo  <- range(anios_grupo)
+    datos_grupo  <- datos_cultivo %>% filter(Anio %in% anios_grupo)
+
+    mapa_cultivo_grupo <- estados_sf %>%
+      cross_join(tibble(Anio = anios_grupo)) %>%
+      left_join(datos_grupo, by = c("nom_join", "Anio"))
+
+    p <- ggplot(mapa_cultivo_grupo) +
+      geom_sf(aes(fill = produccion), color = "white", linewidth = 0.15) +
+      scale_fill_viridis_c(
+        name     = "Producción\n(ton)",
+        labels   = comma,
+        na.value = "gray92",
+        option   = "viridis"
+      ) +
+      facet_wrap(~ Anio, ncol = 3) +
+      labs(
+        title    = paste("Evolución Geográfica de la Producción —", cultivo_i),
+        subtitle = paste(rango_grupo[1], "-", rango_grupo[2],
+                         "| Escala viridis flexible | Máx. 6 años por imagen"),
+        caption  = "Fuente: SIAP"
+      ) +
+      theme_void(base_size = 10) +
+      theme(
+        plot.title       = element_text(face = "bold", hjust = 0.5, size = 14),
+        plot.subtitle    = element_text(hjust = 0.5, color = "gray40", size = 10),
+        strip.text       = element_text(face = "bold", size = 9),
+        legend.position  = "bottom",
+        legend.key.width  = unit(1.8, "cm"),
+        legend.key.height = unit(0.6, "cm"),
+        legend.text      = element_text(size = 11),
+        legend.title     = element_text(size = 12)
+      )
+
+    nombre_limpio  <- gsub("[^a-zA-Z0-9]", "_", tolower(cultivo_i))
+    nombre_archivo <- sprintf("mapas_anuales/por_cultivo/evolucion_%s_%d_%d.png",
+                              nombre_limpio, min(anios_grupo), max(anios_grupo))
+
+    ggsave(nombre_archivo, p, dpi = 150, width = 12, height = 10)
+    message(sprintf("  Guardado: %s [%s, años %d-%d]",
+                    nombre_archivo, cultivo_i, min(anios_grupo), max(anios_grupo)))
+  }
+}
+message("✅ Loop 5C completado: mapas por cultivo divididos en grupos de años")
+
+# Crear un GIF por cultivo
+carpeta_cultivos <- "mapas_anuales/por_cultivo/"
+todos_archivos   <- list.files(carpeta_cultivos, pattern = "evolucion_.*\\.png$", full.names = TRUE)
+cultivos_lista_gif <- unique(gsub("evolucion_([^_]+)_.*", "\\1", basename(todos_archivos)))
+
+for (cultivo in cultivos_lista_gif) {
+  archivos_cultivo <- todos_archivos[grepl(sprintf("evolucion_%s_", cultivo), basename(todos_archivos))]
+  anios_inicio     <- as.numeric(gsub(sprintf("evolucion_%s_([0-9]+)_[0-9]+\\.png", cultivo), "\\1", basename(archivos_cultivo)))
+  archivos_cultivo <- archivos_cultivo[order(anios_inicio)]
+
+  gifski(
+    png_files = archivos_cultivo,
+    gif_file  = sprintf("mapas_anuales/por_cultivo/%s_evolucion_completa.gif", cultivo),
+    width     = 800,
+    height    = 700,
+    delay     = 1.2
+  )
+  message(sprintf("✅ GIF creado para cultivo: %s", cultivo))
+}
+
+message("🎉 Todos los GIFs por cultivo han sido generados.")
+```
+
+> **Ejercicio 5C:** Reproducir para el **valor de la producción**.
+
+---
+
+*Fin de la Práctica 2*
