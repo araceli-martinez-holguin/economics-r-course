@@ -325,8 +325,9 @@ footer {
     <br>
     <p>
       Laboratories combine programming techniques with applied economic
-      questions using datasets related to climate data, agricultural
-      production, and macroeconomic indicators.
+      questions using real datasets related to climate data, Mexico's main
+      agricultural export products, household income and poverty estimation,
+      and macroeconomic indicators.
     </p>
   </section>
 
@@ -373,13 +374,23 @@ footer {
       <div class="step">
         <div class="step-number">5</div>
         <div class="step-text">
-          <strong>Economic Data Analysis</strong> — applying programming
-          tools to analyze real-world economic datasets.
+          <strong>Complex Survey Design and Weighted Estimation</strong> — working
+          with nationally representative surveys and correctly applying
+          expansion factors to obtain valid population estimates.
         </div>
       </div>
 
       <div class="step">
         <div class="step-number">6</div>
+        <div class="step-text">
+          <strong>Poverty and Inequality Measurement</strong> — estimating
+          income-based poverty rates, welfare lines, decile analysis,
+          and inequality indicators such as the Gini coefficient.
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">7</div>
         <div class="step-text">
           <strong>Time Series Analysis</strong> — studying the dynamics of
           economic variables over time.
@@ -387,7 +398,7 @@ footer {
       </div>
 
       <div class="step">
-        <div class="step-number">7</div>
+        <div class="step-number">8</div>
         <div class="step-text">
           <strong>Linear Regression Models</strong> — estimating and
           interpreting basic econometric models using R.
@@ -395,7 +406,7 @@ footer {
       </div>
 
       <div class="step">
-        <div class="step-number">8</div>
+        <div class="step-number">9</div>
         <div class="step-text">
           <strong>Economic Forecasting</strong> — using time series tools
           to generate and evaluate predictions of economic variables.
@@ -415,7 +426,7 @@ footer {
         <div class="step-number">1</div>
         <div class="step-text">
           <strong>Foundations of R</strong> — understanding objects, vectors,
-          and data structures.
+          and data structures in base R.
         </div>
       </div>
 
@@ -431,18 +442,18 @@ footer {
       <div class="step">
         <div class="step-number">3</div>
         <div class="step-text">
-          <strong>Data Manipulation with dplyr</strong> — cleaning and
-          transforming agricultural production data to analyze avocado
-          production in Mexico using SIAP datasets.
+          <strong>Agricultural Export Analysis with dplyr</strong> — cleaning
+          and transforming data to analyze Mexico's main agricultural export
+          products using SIAP datasets under the TMEC framework.
         </div>
       </div>
 
       <div class="step">
         <div class="step-number">4</div>
         <div class="step-text">
-          <strong>Spatial Analysis in R</strong> — combining climate and
-          agricultural datasets to create maps in R and communicate
-          economic and policy-relevant insights.
+          <strong>Household Income and Poverty Estimation</strong> — working
+          with the ENIGH 2024 microdata to estimate poverty rates, analyze
+          income inequality, and decompose household expenditure by decile.
         </div>
       </div>
 
@@ -467,13 +478,13 @@ footer {
         <div class="card-icon">🔬</div>
         <div>
           <div class="card-label">Lab 00</div>
-          <div class="card-title">Types of Objects in R</div>
-          <div class="card-sub">Introduction to R data structures</div>
+          <div class="card-title">Data Types and Base R</div>
+          <div class="card-sub">Vectors · structures · basic manipulation</div>
         </div>
       </a>
 
       <a class="card" href="Laboratories/Laboratory-1/Laboratory-1.html">
-        <div class="card-icon">📊</div>
+        <div class="card-icon">🌦️</div>
         <div>
           <div class="card-label">Lab 01</div>
           <div class="card-title">Analyzing Climate Variables</div>
@@ -485,19 +496,19 @@ footer {
         <div class="card-icon">🌱</div>
         <div>
           <div class="card-label">Lab 02</div>
-          <div class="card-title">Agricultural Data with dplyr</div>
-          <div class="card-sub">SIAP · export crops · TMEC negotiation</div>
+          <div class="card-title">Agricultural Export Products</div>
+          <div class="card-sub">SIAP · Mexico's main export crops · TMEC</div>
         </div>
       </a>
 
-      <div class="card card-disabled">
-        <div class="card-icon">🗺️</div>
+      <a class="card" href="Laboratories/Laboratory-3/Laboratory-3.html">
+        <div class="card-icon">🏠</div>
         <div>
-          <div class="card-label">Lab 03 · Coming soon</div>
-          <div class="card-title">Spatial Analysis in R</div>
-          <div class="card-sub">Maps · climate &amp; agricultural data</div>
+          <div class="card-label">Lab 03</div>
+          <div class="card-title">Poverty Estimation with ENIGH</div>
+          <div class="card-sub">ENIGH 2024 · income · inequality · welfare</div>
         </div>
-      </div>
+      </a>
 
       <div class="card card-disabled">
         <div class="card-icon">📈</div>
@@ -530,7 +541,7 @@ footer {
         <div class="card-icon">📝</div>
         <div>
           <div class="card-label">Assignment 02 · Coming soon</div>
-          <div class="card-title">Agricultural Data — Homework</div>
+          <div class="card-title">Agricultural Exports — Homework</div>
           <div class="card-sub">Based on Laboratory 02</div>
         </div>
       </div>
@@ -539,8 +550,17 @@ footer {
         <div class="card-icon">📝</div>
         <div>
           <div class="card-label">Assignment 03 · Coming soon</div>
-          <div class="card-title">Spatial Analysis — Homework</div>
+          <div class="card-title">Poverty Estimation — Homework</div>
           <div class="card-sub">Based on Laboratory 03</div>
+        </div>
+      </div>
+
+      <div class="card card-disabled">
+        <div class="card-icon">📝</div>
+        <div>
+          <div class="card-label">Assignment 04 · Coming soon</div>
+          <div class="card-title">Time Series — Homework</div>
+          <div class="card-sub">Based on Laboratory 04</div>
         </div>
       </div>
 
@@ -570,11 +590,22 @@ footer {
       </a>
 
       <a class="card" href="Data/cultivos.xlsx">
-        <div class="card-icon">🥑</div>
+        <div class="card-icon">🌾</div>
         <div>
           <div class="card-label">Lab 02</div>
           <div class="card-title">cultivos.xlsx</div>
           <div class="card-sub">SIAP · agricultural production in Mexico</div>
+        </div>
+      </a>
+
+      <a class="card"
+         href="https://www.inegi.org.mx/programas/enigh/nc/2024/"
+         target="_blank">
+        <div class="card-icon">🏘️</div>
+        <div>
+          <div class="card-label">Lab 03</div>
+          <div class="card-title">ENIGH 2024</div>
+          <div class="card-sub">INEGI · household income &amp; expenditure survey</div>
         </div>
       </a>
 
@@ -603,6 +634,15 @@ footer {
       Open the project in RStudio, navigate to a laboratory folder,
       open the <code>.Rmd</code> file and run the code or knit the document
       to reproduce the analysis.
+    </p>
+    <br>
+    <p>
+      <strong>Note for Laboratory 3:</strong> The ENIGH 2024 microdata file
+      (<code>concentradohogar.csv</code>) must be downloaded separately from
+      the <a href="https://www.inegi.org.mx/programas/enigh/nc/2024/"
+      target="_blank" style="color:var(--dark); font-weight:600;">INEGI website</a>
+      and placed in the <code>Laboratories/Laboratory-3/</code> folder before
+      running the lab.
     </p>
   </section>
 
