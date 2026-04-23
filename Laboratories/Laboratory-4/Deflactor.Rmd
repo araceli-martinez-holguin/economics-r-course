@@ -1,0 +1,130 @@
+---
+title: "El Deflactor Implícito del PIB"
+author: "Araceli Martínez Holguín"
+date: "April 14, 2024"
+output: html_document
+---
+
+## Descripción
+
+Variación anual del deflactor implícito del PIB (Base 2013) comparado con el INPC (Base 2da quincena de julio 2018). Frecuencia trimestral, México 1994-2022.
+
+## Librerías
+
+```{r librerias, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(openxlsx)
+library(lubridate)
+```
+
+## Configuración
+
+```{r config}
+setwd("~/Documents/Rfiles/Deflactor-PIB")
+path <- "~/Documents/Rfiles/Deflactor-PIB/Bases/"
+```
+
+## Función auxiliar
+
+Lee un archivo `.xlsx` del PIB, selecciona las filas relevantes, transpone y filtra los periodos no trimestrales.
+
+```{r funcion-leer-pib}
+leer_pib <- function(archivo, filas, col_nombre) {
+  read.xlsx(paste0(path, archivo), sheet = 1, colNames = FALSE) |>
+    (\(df) df[filas, ])() |>
+    t() |>
+    as.data.frame() |>
+    (\(df) df[!(df[, 2] %in% c("6 Meses", "9 Meses", "Anual")) & !is.na(df[, 2]), ])() |>
+    (\(df) { colnames(df) <- c("Año", "Trimestre", col_nombre); df })() |>
+    (\(df) df[1:(nrow(df) - 3), ])() |>
+    (\(df) { df$Año <- rep(1993:2022, each = 4); df })() |>
+    (\(df) { df[[col_nombre]] <- as.numeric(df[[col_nombre]]); df })()
+}
+```
+
+## Carga de datos
+
+### PIB real y nominal (Base 2013)
+
+```{r cargar-pib}
+PIB_real_13 <- leer_pib("PIBT_2.xlsx", 4:6, "PIB_real")
+PIB_nom_13  <- leer_pib("PIBT_5.xlsx", 4:6, "PIB_nom")
+```
+
+### INPC — Promedio trimestral de la variación anual
+
+```{r cargar-inpc}
+INPC_quarterly <- read.xlsx(paste0(path, "INPC_93_24.xlsx"), sheet = 1, colNames = FALSE) |>
+  (\(df) df[-c(1:12, 373:386), ])() |>
+  setNames(c("Fecha", "INPC")) |>
+  mutate(
+    Fecha       = seq(as.Date("1993-01-01"), as.Date("2022-12-01"), by = "1 month"),
+    INPC        = as.numeric(INPC),
+    INPC_annual = (INPC - lag(INPC, 12)) / lag(INPC, 12) * 100,
+    Quarter     = quarter(Fecha)
+  ) |>
+  group_by(Year = year(Fecha), Quarter) |>
+  summarise(INPC_quarterly = mean(INPC_annual, na.rm = TRUE), .groups = "drop")
+```
+
+## Cálculo del deflactor
+
+Se calcula el deflactor implícito como el cociente entre el PIB nominal y el PIB real, y su variación anual trimestral (lag = 4).
+
+```{r deflactor}
+Figura_1 <- PIB_nom_13 |>
+  mutate(
+    PIB_real         = PIB_real_13$PIB_real,
+    Deflactor        = PIB_nom / PIB_real,
+    Deflactor_annual = (Deflactor - lag(Deflactor, 4)) / lag(Deflactor, 4) * 100,
+    INPC             = INPC_quarterly$INPC_quarterly,
+    Fecha            = seq(as.Date("1993-03-01"), as.Date("2023-01-01"), by = "3 months")
+  ) |>
+  select(Fecha, Deflactor = Deflactor_annual, INPC) |>
+  slice(-(1:4)) |>   # elimina NAs de variación anual (lag 4)
+  pivot_longer(c(Deflactor, INPC), names_to = "Variable", values_to = "Value")
+```
+
+## Figura 1
+
+```{r figura-1, fig.width=12, fig.height=10, dpi=300}
+Figura_1_plot <- ggplot(Figura_1, aes(x = Fecha, y = Value, color = Variable)) +
+  geom_line(linewidth = 1.5) +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y",
+               limits = as.Date(c("1994-03-01", "2022-12-01"))) +
+  scale_y_continuous(breaks = seq(0, 55, by = 5)) +
+  scale_color_manual(values = c("darkcyan", "darkorange")) +
+  labs(
+    title    = "Variación Anual del Deflactor del PIB (Base 100 = 2013) e INPC (Base 100 = 2018)",
+    subtitle = "México, 1994-2023",
+    y        = "Variación anual (%), frecuencia trimestral",
+    x        = "Años",
+    color    = "Indicador",
+    caption  = "Fuente: Elaboración propia con datos del INEGI y metodología de la CONASAMI"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title       = element_text(hjust = 0.5, face = "bold", family = "Montserrat"),
+    plot.subtitle    = element_text(hjust = 0.5, family = "Montserrat"),
+    plot.caption     = element_text(family = "Montserrat", face = "bold", color = "darkgray"),
+    axis.text.x      = element_text(angle = 90, vjust = 0.5, hjust = 1, family = "Montserrat"),
+    axis.text.y      = element_text(family = "Montserrat"),
+    legend.position  = "top",
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line        = element_line(color = "black", linewidth = 1),
+    axis.ticks       = element_line(color = "black", linewidth = 1),
+    legend.text      = element_text(family = "Montserrat"),
+    legend.title     = element_text(family = "Montserrat")
+  )
+
+Figura_1_plot
+```
+
+## Guardar figura
+
+```{r guardar, eval=FALSE}
+ggsave("Figura_1_plot.png", Figura_1_plot, width = 12, height = 10, dpi = 300)
+```
