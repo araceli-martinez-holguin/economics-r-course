@@ -3,7 +3,7 @@
 **Instructor:** Araceli Martínez Holguín  
 **Institution:** School of Economics, National Autonomous University of Mexico (UNAM)  
 **Course:** Economics Programming with R  
-**Semester:** February–June 2026 (Semester 2026-2)
+**Semester:** August–November 2026 (Semester 2027-1)
 
 🌐 **[View Course Website](https://araceli-martinez-holguin.github.io/economics-r-course/)**
 
@@ -11,7 +11,7 @@
 
 ## 📖 Course Overview
 
-This repository contains R code, laboratories, datasets, and assignments for the **Economics Programming with R** course at UNAM's School of Economics.
+This repository contains R code, laboratories, and exercises for the **Economics Programming with R** course at UNAM's School of Economics. Assignments and additional datasets will be added to the repository as the course progresses.
 
 The objective of the course is to introduce students to **empirical economic analysis using modern data science tools**. Students learn how to clean, visualize, and analyze economic datasets using **R and RStudio**, while developing reproducible workflows through **R Markdown**.
 
@@ -38,76 +38,62 @@ By the end of the course students should be able to:
 ```
 economics-r-course/
 ├── Laboratories/              # Guided R Markdown labs (.Rmd + rendered .html)
-│   ├── Laboratory-0/          # Data types and basic manipulation in base R
-│   ├── Laboratory-1/          # Analyzing climate variables (CRU data)
-│   ├── Laboratory-2/          # Mexico's main agricultural export products (SIAP · TMEC)
-│   └── Laboratory-3/          # Household income and poverty estimation (ENIGH 2024)
-├── Assignments/               # Student assignment prompts and templates
-│   ├── Assignment-1.Rmd       # Homework based on Laboratory 1
-│   └── Assignment-1.html      # Rendered version of Assignment 1
-├── Data/                      # Datasets used across labs and assignments
-│   ├── cultivos.xlsx          # SIAP · agricultural production data (Mexico)
-│   └── 00ent.*                # INEGI national shapefile of Mexican states
+│   └── Laboratory-0/          # Data types and basic manipulation in base R
+├── Exercises/                 # Short practice exercises (.Rmd + rendered .html)
+│   └── Exercise-0/            # Objects in R with the Gapminder dataset
+├── Data/                      # Datasets used across labs (populated as labs are added)
 ├── index.html                 # Course website homepage
 ├── styles.css                 # Course website stylesheet
 └── README.md                  # You are here
 ```
 
+> More laboratories, exercises, and datasets will be added as the semester
+> progresses, following the weekly program listed below.
+
 ---
 
 ## 🧪 Laboratories
 
-| Lab          | Topic                                                | Status        | Link |
-|--------------|------------------------------------------------------|---------------|------|
-| Laboratory 0 | Data types and basic manipulation in base R          | ✅ Available  | [View](https://araceli-martinez-holguin.github.io/economics-r-course/Laboratories/Laboratory-0/Laboratory-0.html) |
-| Laboratory 1 | Analyzing climate variables (CRU)                    | ✅ Available  | [View](https://araceli-martinez-holguin.github.io/economics-r-course/Laboratories/Laboratory-1/Laboratory-1.html) |
-| Laboratory 2 | Mexico's main agricultural export products           | ✅ Available  | [View](https://araceli-martinez-holguin.github.io/economics-r-course/Laboratories/Laboratory-2/Laboratory-2.html) |
-| Laboratory 3 | Household income and poverty estimation (ENIGH 2024) | ✅ Available  | [View](https://araceli-martinez-holguin.github.io/economics-r-course/Laboratories/Laboratory-3/Laboratory-3.html) |
-| Laboratory 4 | Time series analysis                                 | 🔜 Coming soon | — |
+| Lab          | Topic                                       | Status       | Link |
+|--------------|----------------------------------------------|--------------|------|
+| Laboratory 0 | Data types and basic manipulation in base R | ✅ Available | [View](https://araceli-martinez-holguin.github.io/economics-r-course/Laboratories/Laboratory-0/Laboratory-0.html) |
 
-> More laboratories will be added throughout the semester.
+New laboratories are released weekly as each topic is covered in class (see the full 14-week program under **Topics Covered**).
 
 ---
 
-## 📝 Assignments
+## 🧩 Exercises
 
-| Assignment   | Topic                           | Status        | Based on     |
-|--------------|---------------------------------|---------------|--------------|
-| Assignment 1 | Climate variables — homework    | ✅ Available  | Laboratory 1 |
-| Assignment 2 | Agricultural exports — homework | 🔜 Coming soon | Laboratory 2 |
-| Assignment 3 | Poverty estimation — homework   | 🔜 Coming soon | Laboratory 3 |
-| Assignment 4 | Time series — homework          | 🔜 Coming soon | Laboratory 4 |
-
-Assignments are distributed as `.Rmd` templates. Students fill in the code and interpretation, then submit the knitted `.html` file.
+| Exercise    | Topic                              | Status       | Link |
+|-------------|-------------------------------------|--------------|------|
+| Exercise 00 | Objects in R with Gapminder data   | ✅ Available | [View](https://araceli-martinez-holguin.github.io/economics-r-course/Exercises/Exercise-0/Ejercicio0_Objetos_R_Gapminder.html) |
 
 ---
 
 ## 🗄️ Data
 
-| Dataset                  | Description                                              | Used in      |
-|--------------------------|----------------------------------------------------------|--------------|
-| CRU TS 4.09              | Climate Research Unit · monthly climate data 1901–2024   | Laboratory 1, Assignment 1 |
-| cultivos.xlsx            | SIAP · agricultural production in Mexico                 | Laboratory 2, Assignment 2 |
-| ENIGH 2024               | INEGI · National Household Income and Expenditure Survey | Laboratory 3, Assignment 3 |
-| 00ent (shapefile)        | INEGI · national shapefile of Mexican states             | Coming soon  |
-| Macroeconomic indicators | Inflation · GDP · monetary policy                        | Laboratory 4 (coming soon) |
-
-The CRU dataset is downloaded directly from the [CRU website](https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.09/) during the lab session. The ENIGH 2024 microdata (`concentradohogar.csv`) is downloaded from the [INEGI website](https://www.inegi.org.mx/programas/enigh/nc/2024/). All other datasets are included in the `Data/` folder.
+No datasets have been added to the repository yet. Datasets will be included alongside each new laboratory as it is released.
 
 ---
 
 ## 📚 Topics Covered
 
-1. Introduction to R and RStudio
-2. Data types and data structures in base R
-3. Data manipulation with `dplyr` and `tidyr`
-4. Economic data visualization with `ggplot2`
-5. Complex survey design and weighted estimation
-6. Poverty and inequality measurement
-7. Time series analysis
-8. Linear regression models
-9. Economic forecasting
-10. Causal inference
+This is the full 14-week program for the course:
+
+1. **First Steps in R** — installing R and RStudio; data types (numeric, character, logical); vectors, lists, and data frames; why R instead of Excel (reproducibility).
+2. **Descriptive Statistics with the Economic Census** — categorical variables (sector, establishment size, state); frequency tables, measures of central tendency and dispersion.
+3. **Getting Data via API** — programmatic download of economic series using Banxico's SIE API (`httr2`, `jsonlite`).
+4. **Data Manipulation** — `dplyr` and `tidyr` (filter, group_by, summarise, mutate, left_join, pivot_longer/wider) with SIAP agricultural data.
+5. **Data Visualization** — publication-ready graphics with `ggplot2`; best practices; static maps with `sf`.
+6. **Climate Time Series** — downloading, cleaning, and visualizing historical CRU series (precipitation, temperature) 1901–2024; reading data with `readr`.
+7. **Quarterly Macroeconomic Series** — the implicit GDP deflator: series manipulation, custom functions, dates with `lubridate`, deflator vs. CPI comparison.
+8. **Complex Survey Design** — poverty estimation with ENIGH 2024: sample design (`survey`/`srvyr`), income deciles, the Gini coefficient, poverty lines.
+9. **Linear Regression: Foundations and Interpretation** — simple and multiple models with Penn World Table data; Gauss-Markov assumptions, interpreting coefficients, goodness of fit (R²).
+10. **Linear Regression: Robustness Checks** — on the same Penn World Table model: multicollinearity (VIF), heteroskedasticity (Breusch-Pagan, robust HC errors), functional form (RESET test).
+11. **Binary Choice Models: Logit and Probit** — labor force participation and informality with the ENOE; marginal effects, confusion matrix, and the ROC curve.
+12. **Causal Inference: Foundations and Difference-in-Differences** — correlation vs. causation, omitted variable bias, natural experiments; the Bangladesh microfinance case (Pitt & Khandker, 1998): cross-sectional and panel DiD, the parallel trends assumption.
+13. **Reproducibility and Course Wrap-up** — best practices with R Markdown and Git/GitHub; building a student's own lab from a dataset of their choice.
+14. **Final Integrative Project** — a short applied analysis (teams of 2–3 students) combining at least two tools from the course on a real dataset.
 
 ---
 
@@ -146,19 +132,15 @@ git clone https://github.com/araceli-martinez-holguin/economics-r-course.git
 
 2. Open the project in **RStudio**
 
-3. Navigate to any `Laboratories/` folder and open the `.Rmd` file
+3. Navigate to any `Laboratories/` or `Exercises/` folder and open the `.Rmd` file
 
-4. Run chunks in order or **Knit to HTML** to reproduce the full laboratory report
-
-5. For assignments, open the corresponding `.Rmd` file in `Assignments/`, complete the code and interpretations, and knit to HTML
-
-> **Note for Laboratory 3:** The ENIGH 2024 microdata file (`concentradohogar.csv`) must be downloaded separately from the [INEGI website](https://www.inegi.org.mx/programas/enigh/nc/2024/) and placed in the `Laboratories/Laboratory-3/` folder before running the lab.
+4. Run chunks in order or **Knit to HTML** to reproduce the full report
 
 ---
 
 ## 📈 Student Projects
 
-Toward the end of the semester, students complete a short **empirical economic project** using R.
+Toward the end of the semester, students complete a short **empirical economic project** using R (see Week 14 of the program).
 
 Projects typically include:
 
@@ -174,7 +156,7 @@ Students submit their work as **R Markdown reports**.
 
 ## 🔁 Reproducibility
 
-All laboratories and assignments are written in **R Markdown**, allowing students to combine code, results, figures, and economic interpretation in a single reproducible document.
+All laboratories and exercises are written in **R Markdown**, allowing students to combine code, results, figures, and economic interpretation in a single reproducible document.
 
 ---
 
