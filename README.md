@@ -64,7 +64,7 @@ New laboratories are released weekly as each topic is covered in class (see the 
 
 ## 🧩 Exercises
 
-| Exercise    | Topic                              | Status       | Link |
+| Exercise    | Topic                               | Status       | Link |
 |-------------|-------------------------------------|--------------|------|
 | Exercise 00 | Objects in R with Gapminder data   | ✅ Available | [View](https://araceli-martinez-holguin.github.io/economics-r-course/Exercises/Exercise-0/Ejercicio0_Objetos_R_Gapminder.html) |
 
@@ -72,8 +72,9 @@ New laboratories are released weekly as each topic is covered in class (see the 
 
 ## 🗄️ Data
 
-No datasets have been added to the repository yet. Datasets will be included alongside each new laboratory as it is released.
-
+|Dataset name | Topic                                    | Status       | Link |
+|-------------|------------------------------------------|--------------|------|
+| ENOE        | Sociodemographics of the labor market    | ✅ Available | [View](https://araceli-martinez-holguin.github.io/economics-r-course/Data/Data-1/enoe_2025_4t_sample_50k.xlsx) |
 ---
 
 ## 📚 Topics Covered
