@@ -1,0 +1,116 @@
+NOMBRE_CAMPO,LONGITUD,TIPO,NEMÓNICO,CATÁLOGO,RANGO_CLAVES   
+Resultado definitivo de la entrevista,2,C,r_def,r_def,"00,15                                                           "
+Número de la localidad,4,C,cve_loc,,0001-9998
+Número de municipio según entidad,3,C,cve_mun,cve_mun,001-575
+Estrato nacional y estatal,2,C,est,,"Primer dígito 1-4, Segundo dígito 0-4"
+Estrato de diseño trimestral,4,C,est_d_tri,,0001-9999
+Estrato de diseño mensual,4,C,est_d_men,,0001-9999
+Número de ageb del marco nacional,5,C,cve_ageb,,00001-99999
+Tamaño de localidad trimestral,1,C,t_loc_tri,t_loc_tri,[1-4]
+Tamaño de localidad mensual,1,C,t_loc_men,t_loc_men,[1-4]
+Ciudad autorrepresentada,2,C,cd_a,cd_a,"01-52, 81-86"
+Entidad federativa,2,C,cve_ent,cve_ent,[01-32]
+Control,5,C,con,,00001-99999
+Unidad primaria de muestreo,7,C,upm,,0000001-9999999
+Distribución semanal,3,C,d_sem,,"Primer dígito 1-5, Segundo y tercer dígito 01-13"
+Número progresivo de la vivienda,4,C,n_pro_viv,,0001-9999
+Vivienda seleccionada,2,C,v_sel,v_sel,[01-99]
+Número de hogar,1,C,n_hog,n_hog,[1-9]
+Hogar mudado,1,C,h_mud,h_mud,0-4
+Número de entrevista o visita,2,C,n_ent,n_ent,[1-5]
+Periodo,3,C,per,,"Primer dígito 1-4, Segundo y tercer dígito 00-99"
+Número de renglón,2,C,n_ren,n_ren,[01-30]
+Pregunta 6 Condición de residencia,1,C,c_res,c_res,[1-3]
+Pregunta 7 Clave de parentesco,3,C,par_c,par_c,Catálogo de parentesco
+Pregunta 8 Sexo,1,C,sex,sex,"1,2"
+Pregunta 9 Edad,2,C,eda,eda,00-99
+Pregunta 10 Día de nacimiento,2,C,nac_dia,nac_dia,"01-31,99"
+Pregunta 10 Mes de nacimiento,2,C,nac_mes,nac_mes,"01-12,99"
+Pregunta 10 Año de nacimiento,4,C,nac_anio,,1900 al año actual o 9999
+Pregunta 11 Clave de lugar de nacimiento,3,C,l_nac_c,,Catálogo y clasificación de entidades y países
+Pregunta 12  ¿Sabe leer y escribir un recado...?,1,C,cs_p12,cs_p12,"1-2,9"
+Pregunta 13  ¿Hasta qué año aprobó... en la escuela?,2,C,cs_p13_1,cs_p13_1,"00-09,99"
+Pregunta 13  ¿Hasta qué año aprobó... en la escuela?,1,C,cs_p13_2,cs_p13_2,0-9
+Pregunta 14 Clave de la carrera,6,C,cs_p14_c,cs_p14_c,Catálogo CMPE (carreras)
+Pregunta 15  ¿Qué estudios le pidieron a ... para ingresar a esta carrera?,1,C,cs_p15,cs_p15,"1-3,9"
+Pregunta 16  ¿...Terminó los estudios o materias de esta carrera?,1,C,cs_p16,cs_p16,"1-2,9"
+Pregunta 17  ¿... Asiste actualmente a la escuela?,1,C,cs_p17,cs_p17,"1-2,9"
+Pregunta 18 En total cuántas hijas e hijos que nacieron vivos ha tenido,2,C,n_hij,,"00-25,99"
+Pregunta 19 Estado conyugal,1,C,e_con,e_con,"1-6,9"
+Pregunta 20a Entidad o país de residencia hace un año,1,C,cs_p20a_1,cs_p20a_1,[1-4]
+Pregunta 20a Clave de entidad o país de residencia hace un año,3,C,cs_p20a_c,,Catálogo y clasificación de entidades y países
+Pregunta 20b Municipio de residencia hace un año,1,C,cs_p20b_1,cs_p20b_1,[1-2]
+Pregunta 20b Clave de municipio de residencia hace un año,3,C,cs_p20b_c,,Catálogo y clasificación de entidades y países
+Pregunta 20c Causa de la migración,2,C,cs_p20c_1,cs_p20c_1,[01-11]
+Pregunta 21 Motivos de la ausencia,2,C,cs_ad_mot,cs_ad_mot,"01-10,99"
+Pregunta 21 Especificación de otro motivo,50,C,cs_p21_des,,Texto
+Pregunta 22  ¿A qué estado de la república o país se fue ...?,1,C,cs_ad_des,cs_ad_des,"1-3,9"
+Pregunta 23  ¿Cuál es el motivo principal por el que llegó ...?,2,C,cs_nr_mot,cs_nr_mot,"01-10,99"
+Pregunta 23 Especificación del otro motivo,50,C,cs_p23_des,,Texto
+Pregunta 24  ¿De qué estado de la República Mexicana o país vino ...?,1,C,cs_nr_ori,cs_nr_ori,"1-3,9"
+Urbano/Rural,1,N,ur,ur,[1-2]
+Zona salarial,1,N,zona,zona,[1-2]
+Salario mínimo mensual según la zona salarial,4,N,salario,,0-9999
+Ponderador trimestral,6,N,fac_tri,,1-999999
+Ponderador mensual,6,N,fac_men,,1-999999
+Clasificación de la población en PEA y PNEA,1,N,clase1,clase1,[1-2]
+Clasificación de la población en ocupada y desocupada; disponible y no disponible,1,N,clase2,clase2,[1-4]
+"Clasificación de la población en ocupada plena, sin pago, ausente con nexo laboral y retorno, desocupada, iniciadora con búsqueda y ausente sin ingreso y nexo laboral",1,N,clase3,clase3,[1-7]
+Clasificación de la población ocupada por posición en la ocupación,1,N,pos_ocu,pos_ocu,[1-5]
+Clasificación de la población ocupada por condición de acceso a instituciones de salud,1,N,seg_soc,seg_soc,[1-3]
+Clasificación de la población ocupada por sector de actividad económica,1,N,rama,rama,[1-7]
+Clasificación de la población ocupada por condición de ocupación,2,N,c_ocu11c,c_ocu11c,[1-11]
+Clasificación de la población ocupada por nivel de ingreso,1,N,ing7c,ing7c,[1-7]
+Clasificación de la población ocupada por la duración de la jornada,1,N,dur9c,dur9c,[1-9]
+Clasificación de la población ocupada por número de trabajadores,1,N,emple7c,emple7c,[1-7]
+Clasificación de la población ocuapda por prestaciones de salud,1,N,medica5c,medica5c,[1-5]
+Clasificación de la población ocupada por búsqueda de otro empleo,1,N,buscar5c,buscar5c,[1-5]
+Clasificación de la población ocuapda según sector de actividades-Totales,1,N,rama_est1,rama_est1,[1-4]
+Clasificación de la población según sector de actividades-Subtotales,2,N,rama_est2,rama_est2,[1-11]
+Clasificación de la población ocupada por duración de la jornada laboral,1,N,dur_est,dur_est,[1-6]
+Clasificación de la población ocupada según el tamaño de la unidad económica-Totales,1,N,ambito1,ambito1,[1-3]
+Clasificación de la población ocupada por tamaño de la unidad económica-Subtotales,1,N,ambito2,ambito2,[1-8]
+Clasificación de la población ocupada por tipo de unidad económica-Totales,1,N,tue1,tue1,[1-4]
+Clasificación de la población ocupada por tipo de unidad económica-Subtotales,1,N,tue2,tue2,[1-7]
+Clasificación de la población ocupada por tipo de unidad,1,N,tue3,tue3,[1-2]
+Clasificación de la población ocupada buscador de otro trabajo,1,N,busqueda,busqueda,[1-2]
+Clasificación de la población desocupada por antecedentes,1,N,d_ant_lab,d_ant_lab,[1-2]
+Clasificación de la población desocupada por condición de desocupación,1,N,d_cexp_est,d_cexp_est,[1-4]
+Clasificación de la duración del desempleo,1,N,dur_des,dur_des,[1-6]
+Población subocupada,1,N,sub_o,sub_o,"1,0"
+Clasificación de la población subocupada,1,N,s_clasifi,s_clasifi,[1-6]
+Población subordinada y remunerada,1,N,remune2c,remune2c,[1-2]
+Población subordinada y remunerada por prestaciones laborales (sin considerar el acceso a las instituciones de salud),1,N,pre_asa,pre_asa,[1-3]
+Clasificación de la población subordinada y remunerada por disponibilidad de contrato escrito,1,N,tip_con,tip_con,[1-6]
+Población no económicamente activa disponible,1,N,dispo,dispo,[1-7]
+Población no económicamente activa no disponible,1,N,nodispo,nodispo,[1-9]
+Clasificación de la población no económicamente activa no disponible por condición de inacividad,1,N,c_inac5c,c_inac5c,[1-5]
+Composición de la población no económicamente activa,1,N,pnea_est,pnea_est,[1-6]
+Clasificación de la población de 5 años y más por nivel de instrucción,1,N,niv_ins,niv_ins,[1-5]
+Clasificación de la población de 15 años y más: Grupo edad 5 claves,1,N,eda5c,eda5c,[1-5]
+Clasificación de la población de 15 años y más: Grupo edad 7 claves,1,N,eda7c,eda7c,[1-7]
+Clasificación de la población de 15 años y más: Grupo edad 12 claves,2,N,eda12c,eda12c,[1-12]
+Clasificación de la población total en grupos de edad,2,N,eda19c,eda19c,[1-19]
+Clasificación de la población femenina de 15 años y más por número de hijos,1,N,hij5c,hij5c,[1-5]
+Clasificación de la población de 15 años y más por condición de actividad e inactividad,2,N,domestico,domestico,[1-10]
+Años de escolaridad,2,N,anios_esc,anios_esc,"1-24,99"
+Horas trabajadas en la semana,3,N,hrsocup,,1-168
+Ingreso mensual,6,N,ingocup,,1-999998
+Promedio de ingreso por hora trabajada,17,N,ing_x_hrs,,"11 enteros, un punto y 5 decimales"
+Sí buscó trabajo,1,N,tpg_p8a,tpg_p8a,[1-0]
+"Clasificación de la población en ocupados que trabajan menos de 35 hrs., más de 35 hrs, y más de 48 hrs.",1,N,tcco,tcco,[1-3]
+Clasificación de la población cuenta propia en actividades no calificadas,1,N,cp_anoc,,1
+Instituciones de atención médica,1,N,imssissste,imssissste,[1-5]
+Población ocupada que trabaja más de 48 horas y gana menos de 1 salario mínimo,1,N,ma48me1sm,,1
+Clasificación de la población por apoyos económicos,1,N,p14apoyos,p14apoyos,[1-3]
+Clasificación de actividades económicas con base al sistema de clasificación industrial de América del Norte,2,N,scian,scian,[1-21]
+Total de trabajos,1,N,t_tra,t_tra,[1-2]
+Clasificación de empleos formales e informales de la primera actividad,1,N,emp_ppal,emp_ppal,[1-2]
+Tipo de unidad económica del trabajo principal,1,N,tue_ppal,tue_ppal,[1-2]
+Trabajadores transfronterizos del trabajo principal,1,N,trans_ppal,trans_ppal,[1-2]
+Filas agregadas de la matriz Hussmanns del trabajo principal,1,N,mh_fil2,mh_fil2,[1-4]
+Columnas de la matriz Hussmanns del trabajo principal,2,N,mh_col,mh_col,[1-10]
+Sectores institucionales del trabajo principal,2,N,sec_ins,sec_ins,"1-11, 3+4 Negocios formales no constituidos en sociedad (Cuasi corporaciones y negocios familiares), 6+7 Instituciones no lucrativas, 8+9+10 Hogares"
+Tipo de entrevista,1,C,tipo,tipo,[1-2]
+Mes calendario,2,C,mes_cal,mes_cal,"01-12, 96-99"
+Clave geoestadistíca,5,C,cvegeo,,[00001-99999]
