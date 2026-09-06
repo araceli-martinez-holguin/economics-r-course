@@ -1,0 +1,395 @@
+---
+title: "Ejercicio 0: Objetos en R utilizando Gapminder"
+author: "Araceli Martinez Holguin"
+date: "06 de septiembre de 2026"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+## =========================================================
+## Ejercicio 0: Objetos en R utilizando Gapminder
+## Autor: Araceli Martinez Holguin
+## Fecha: 06 de septiembre de 2026
+## Ejercicio 0: Objetos en R utilizando 'Gapminder'
+## Curso: R para economistas
+## =========================================================
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Curso: R para economistas
+
+## 0. Instalación y carga de paquetes
+
+```{r paquetes}
+## ---------------------------------------------------------
+## 0. Instalación y carga de paquetes
+## ---------------------------------------------------------
+# install.packages("gapminder")
+library(gapminder)
+```
+
+## Parte 1 — Conociendo la base de datos
+
+```{r parte1-cargar}
+## ---------------------------------------------------------
+## Parte 1 — Conociendo la base de datos
+## ---------------------------------------------------------
+# Cargamos la base
+data(gapminder)
+```
+
+```{r parte1-view, eval=FALSE}
+# En caso de no aparecer en el ambiente, cargamos tabla
+View(gapminder)
+```
+
+> **Nota:** `View(gapminder)` abre una pestaña interactiva de RStudio y no
+> genera ninguna salida al compilar (knit) este documento. Por eso ese
+> bloque tiene la opción `eval=FALSE`: el código queda documentado, pero
+> no se ejecuta automáticamente. Para verlo, corran esa línea directamente
+> en la consola de RStudio.
+
+```{r parte1-estructura}
+# Analizamos la estructura
+str(gapminder)        
+
+# Dimensiones
+dim(gapminder)        
+# Número de filas
+nrow(gapminder)
+# Número de columnas
+ncol(gapminder)
+```
+
+## Ejercicio 1: explorando tipos de objetos
+
+```{r ejercicio1-tipos}
+## ---------------------------------------------------------
+## Ejercicio 1: explorando tipos de objetos
+## ---------------------------------------------------------
+
+# Variable de tipo numerico
+pib_percapita <- gapminder$gdpPercap
+class(pib_percapita)          # "numeric"
+esperanza <- gapminder$lifeExp
+class(esperanza)          # "numeric"
+
+# Variable de tipo entero
+poblacion <- gapminder$pop
+class(poblacion)               # "integer"
+
+# Variables de tipo factor
+# Continentes
+continentes <- gapminder$continent
+levels(continentes)           # 5 categorías
+table(continentes)            # frecuencia por continente
+# Paises
+paises <- gapminder$country
+levels(paises)           # 5 categorías
+table(paises)            # frecuencia por continente
+```
+
+> **Nota:** el comentario `# 5 categorías` sobre `paises` se copió del
+> bloque de continentes de arriba; en realidad `country` tiene un nivel
+> por cada país del dataset, no 5. Lo confirmamos sin modificar el
+> código original:
+
+```{r ejercicio1-paises-check}
+length(levels(paises))   # número real de niveles (países) en el factor
+```
+
+### Categorización de países ricos y pobres (factor)
+
+```{r categoria-pib-panel}
+# Crear variable de tipo factor, en donde se categoricen como
+# países ricos todos aquellos países con más de 20,000 y como
+# países pobres todos los demás, y contar cuántos países son ricos
+# y cuántos pobres
+
+# Primero el vector lógico (TRUE = rico, FALSE = pobre), igual que antes...
+es_rico <- gapminder$gdpPercap > 20000
+class(es_rico)                 # "logical"
+
+# ...pero ahora lo convertimos a factor con etiquetas de texto en vez de
+# TRUE/FALSE. ifelse() recorre el vector lógico y devuelve "Rico" cuando
+# es TRUE y "Pobre" cuando es FALSE; factor() convierte ese resultado en
+# una variable categórica.
+categoria_pib <- factor(ifelse(es_rico, "Rico", "Pobre"),
+                        levels = c("Pobre", "Rico"))
+
+class(categoria_pib)           # "factor"
+levels(categoria_pib)          # "Pobre" "Rico"
+
+table(categoria_pib)           # conteo de países-año en cada categoría
+```
+
+> **Nota importante:** `gapminder` tiene 1704 filas = 142 países × 12
+> años, así que la tabla de arriba cuenta **combinaciones país-año**, no
+> países únicos — un mismo país puede pasar de "Pobre" a "Rico" entre un
+> año y otro. Para contar **países** (observaciones únicas) hay que
+> aplicar el mismo procedimiento sobre un solo año.
+
+```{r categoria-pib-2007}
+# Nos quedamos con el año 2007 para tener una fila por país (observación
+# única), en vez de las 12 filas por país que tiene el panel completo.
+datos_2007 <- gapminder[gapminder$year == 2007, ]
+
+es_rico_2007 <- datos_2007$gdpPercap > 20000
+categoria_pib_2007 <- factor(ifelse(es_rico_2007, "Rico", "Pobre"),
+                              levels = c("Pobre", "Rico"))
+
+table(categoria_pib_2007)        # ahora sí: conteo de PAÍSES (2007) únicos
+prop.table(table(categoria_pib_2007)) * 100   # lo mismo, en porcentaje
+
+# Comprobación de que datos_2007 sí tiene una fila por país:
+length(unique(datos_2007$country))                       # 142
+nrow(datos_2007) == length(unique(datos_2007$country))    # TRUE
+```
+
+```{r parte1-datos2007-original}
+# Nos quedamos con el año 2007 desde ahora, porque las siguientes partes
+# (histogramas, estadísticas, loops) trabajan sobre este corte transversal.
+# (Nota: es el mismo objeto datos_2007 creado arriba; se vuelve a asignar
+# aquí sin cambiar su contenido, tal como estaba en la versión original.)
+datos_2007 <- gapminder[gapminder$year == 2007, ]
+```
+
+## Parte 2 — Exploración visual: ¿cómo se comportan las variables?
+
+```{r parte2-stats}
+## ---------------------------------------------------------
+## Parte 2 — Exploración visual: ¿cómo se comportan las variables?
+## ---------------------------------------------------------
+# ANTES de calcular estadísticas puntuales o de hacer loops, siempre es
+# buena práctica VER la forma de la distribución de una variable. Un
+# histograma nos dice de un vistazo si los datos son simétricos, si hay
+# valores extremos, y si la media es un buen resumen o no.
+
+media_vida   <- mean(datos_2007$lifeExp)
+mediana_vida <- median(datos_2007$lifeExp)
+rango_vida <- range(datos_2007$lifeExp)
+```
+
+```{r hist-vida, fig.width=7, fig.height=5}
+# --- Histograma 1: Esperanza de vida ---
+hist_vida <- hist(datos_2007$lifeExp,
+                  col = "navyblue",
+                  main = "Distribución de la esperanza de vida en 2007",
+                  xlab = "Años",
+                  ylab = "Número de países")
+
+# Curva de densidad superpuesta. density() da una escala de PROBABILIDAD
+# (el área bajo la curva suma 1), así que la reescalamos multiplicando
+# por n (número de países) y por el ancho de cada barra del histograma,
+# para que quede en la misma escala de conteo.
+densidad_vida    <- density(datos_2007$lifeExp)
+ancho_barra_vida <- diff(hist_vida$breaks)[1]
+lines(densidad_vida$x,
+      densidad_vida$y * length(datos_2007$lifeExp) * ancho_barra_vida,
+      col = "orange", lwd = 2)
+
+abline(v = media_vida,   col = "red",  lwd = 2, lty = 2)
+abline(v = mediana_vida, col = "gold", lwd = 2, lty = 3)
+
+legend("topleft",
+       legend = c(paste0("Media = ", round(media_vida, 1)),
+                  paste0("Mediana = ", round(mediana_vida, 1)),
+                  "Curva de densidad"),
+       col = c("red", "gold", "orange"),
+       lty = c(2, 3, 1), lwd = 2, bty = "n")
+```
+
+```{r hist-pib, fig.width=7, fig.height=5}
+# --- Histograma 2: PIB per cápita ---
+media_pib   <- mean(datos_2007$gdpPercap)
+mediana_pib <- median(datos_2007$gdpPercap)
+rango_pib <- range(datos_2007$gdpPercap)
+
+hist_pib <- hist(datos_2007$gdpPercap,
+                 col = "darkorchid",
+                 main = "Distribución del PIB per cápita en 2007",
+                 xlab = "PIB per cápita (USD)",
+                 ylab = "Número de países")
+
+densidad_pib    <- density(datos_2007$gdpPercap)
+ancho_barra_pib <- diff(hist_pib$breaks)[1]
+lines(densidad_pib$x,
+      densidad_pib$y * length(datos_2007$gdpPercap) * ancho_barra_pib,
+      col = "orange", lwd = 2)
+
+abline(v = media_pib,   col = "red",  lwd = 2, lty = 2)
+abline(v = mediana_pib, col = "gold", lwd = 2, lty = 3)
+
+legend("topright",
+       legend = c(paste0("Media = ", round(media_pib, 1)),
+                  paste0("Mediana = ", round(mediana_pib, 1)),
+                  "Curva de densidad"),
+       col = c("red", "gold", "orange"),
+       lty = c(2, 3, 1), lwd = 2, bty = "n")
+```
+
+```{r nota-pedagogica-1, include=FALSE}
+# Nota pedagógica clave (léanla ANTES de seguir con el resto del lab):
+# En esperanza de vida la asimetría es leve (media y mediana cercanas).
+# En PIB per cápita es mucho más fuerte: la media queda claramente a la
+# derecha de la mediana, porque unos pocos países muy ricos "jalan" el
+# promedio hacia arriba. Esto es justo lo que vamos a confirmar con
+# números concretos en la Parte 4, y es la razón por la que en economía
+# casi siempre se reporta la MEDIANA del ingreso, no solo la media.
+```
+
+> **Nota pedagógica clave** (léanla antes de seguir con el resto del
+> laboratorio): en esperanza de vida la asimetría es leve (media y
+> mediana cercanas). En PIB per cápita es mucho más fuerte: la media
+> queda claramente a la derecha de la mediana, porque unos pocos países
+> muy ricos "jalan" el promedio hacia arriba. Esto es justo lo que vamos
+> a confirmar con números concretos en la Parte 4, y es la razón por la
+> que en economía casi siempre se reporta la **mediana** del ingreso, no
+> solo la media.
+
+## Parte 4 — Ejercicio 2: estadísticas y filtrado adicional (2007)
+
+> *(Nota: la numeración salta de "Parte 2" a "Parte 4", tal como estaba
+> en el script original — la sección de tipos de objetos, arriba, cumple
+> el rol de "Parte 3" aunque no llevaba ese número.)*
+
+```{r parte4-stats}
+## ---------------------------------------------------------
+## Parte 4 — Ejercicio 2: estadísticas y filtrado adicional (2007)
+## ---------------------------------------------------------
+# Las medias y medianas ya se calcularon en la Parte 2 (media_vida,
+# mediana_vida, media_pib, mediana_pib); aquí solo las imprimimos junto
+# con el rango, y seguimos explorando el data.frame con más filtros.
+
+rango_vida <- range(datos_2007$lifeExp)
+
+cat("Esperanza de vida -> Media:", round(media_vida, 2),
+    "| Mediana:", round(mediana_vida, 2), "\n")
+cat("PIB per cápita     -> Media:", round(media_pib, 2),
+    "| Mediana:", round(mediana_pib, 2), "\n")
+
+americas_2007 <- datos_2007[datos_2007$continent == "Americas", ]
+nrow(americas_2007)
+
+indice_max <- which.max(datos_2007$gdpPercap)
+datos_2007$country[indice_max]
+datos_2007$gdpPercap[indice_max]
+```
+
+## Parte 5 — Ejercicio 3a: for sobre un subconjunto de países de interés
+
+```{r parte5-loop-subset}
+## ---------------------------------------------------------
+## Parte 5 — Ejercicio 3a: for sobre un subconjunto de países de interés
+## ---------------------------------------------------------
+# Primer nivel del ejercicio: un loop sencillo sobre 9 países, con una
+# clasificación binaria fija (umbral de 15,000 USD).
+
+paises_interes <- c("Mexico", "United States", "Canada",
+                    "Guatemala", "Costa Rica", "Germany", "Colombia", "Peru",
+                    "Argentina")
+
+sub_datos <- datos_2007[datos_2007$country %in% paises_interes, ]
+sub_datos <- sub_datos[order(sub_datos$country), ]
+sub_datos
+
+for (i in 1:nrow(sub_datos)) {
+  pais <- as.character(sub_datos$country[i])
+  pib  <- sub_datos$gdpPercap[i]
+  
+  nivel <- if (pib >= 15000) "ALTO INGRESO" else "INGRESO MEDIO/BAJO"
+  
+  cat(pais, "-> PIB per cápita:", round(pib, 1), "|", nivel, "\n")
+}
+```
+
+## Parte 6 — Ejercicio 3b: for sobre TODOS los países (extiende 5)
+
+```{r parte6-loop-todos}
+## ---------------------------------------------------------
+## Parte 6 — Ejercicio 3b: for sobre TODOS los países (extiende 5)
+## ---------------------------------------------------------
+# Segundo nivel del ejercicio: en vez de un subconjunto fijo y un umbral
+# arbitrario, recorremos los 142 países y comparamos cada uno contra la
+# media real (media_pib), además de marcar los casos extremos.
+
+todos_datos <- datos_2007[order(datos_2007$country), ]
+
+pib_max <- max(datos_2007$gdpPercap)
+pib_min <- min(datos_2007$gdpPercap)
+
+cat("====== PIB per cápita 2007 — todos los países ======\n")
+cat("Máximo :", round(pib_max, 1), "\n")
+cat("Mínimo :", round(pib_min, 1), "\n")
+cat("Media  :", round(media_pib, 1), "\n")
+cat("Mediana:", round(mediana_pib, 1), "\n\n")
+
+for (i in 1:nrow(todos_datos)) {
+  pais <- as.character(todos_datos$country[i])
+  pib  <- todos_datos$gdpPercap[i]
+  
+  nivel <- if (pib >= media_pib) "SOBRE LA MEDIA" else "BAJO LA MEDIA"
+  
+  etiqueta <- ""
+  if (pib == pib_max) etiqueta <- " <-- PIB MÁXIMO"
+  if (pib == pib_min) etiqueta <- " <-- PIB MÍNIMO"
+  
+  cat(pais, "-> PIB per cápita:", round(pib, 1), "|", nivel, etiqueta, "\n")
+}
+```
+
+## Parte 7 — Reporte por continente
+
+```{r parte7-reporte-continente}
+## ---------------------------------------------------------
+## Parte 7 — Reporte por continente
+## ---------------------------------------------------------
+
+# --- Paso 1: Estadísticas por continente ---
+continentes_unicos <- levels(gapminder$continent)
+continentes_unicos
+
+cat("====== Reporte por continente (2007) ======\n")
+
+for (cont in continentes_unicos) {
+  sub <- datos_2007[datos_2007$continent == cont, ]
+  
+  pib_prom  <- mean(sub$gdpPercap)
+  vida_prom <- mean(sub$lifeExp)
+  n_paises  <- nrow(sub)
+  
+  cat(cont, "| Países:", n_paises,
+      "| PIB per cápita promedio:", round(pib_prom, 1),
+      "| Esperanza de vida promedio:", round(vida_prom, 1), "\n")
+}
+```
+
+```{r parte7-barplot, fig.width=7, fig.height=5}
+# --- Paso 2: Gráfica — PIB per cápita promedio por continente ---
+prom_por_continente <- tapply(datos_2007$gdpPercap,
+                              datos_2007$continent, mean)
+
+barplot(prom_por_continente,
+        col    = c("#E57373", "#64B5F6", "#FFD54F", "#81C784", "#BA68C8"),
+        border = "white",
+        main   = "PIB per cápita promedio por continente (2007)",
+        xlab   = "Continente",
+        ylab   = "PIB per cápita (USD)",
+        ylim   = c(0, max(prom_por_continente) * 1.2))
+```
+
+```{r parte7-scatter, fig.width=7, fig.height=5}
+# --- Paso 3: Relación PIB vs. esperanza de vida ---
+plot(datos_2007$gdpPercap, datos_2007$lifeExp,
+     col = as.numeric(datos_2007$continent), pch = 19,
+     main = "PIB per cápita vs. Esperanza de vida (2007)",
+     xlab = "PIB per cápita (USD)", ylab = "Esperanza de vida (años)")
+
+legend("bottomright", legend = levels(datos_2007$continent),
+       col = 1:5, pch = 19, bty = "n")
+```
