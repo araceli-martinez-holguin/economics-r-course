@@ -55,7 +55,7 @@ body {
   margin-bottom: 25px;
 }
 
-/* ---------------- HERO BUTTONS (4) ---------------- */
+/* ---------------- HERO BUTTONS ---------------- */
 .hero-buttons {
   display: flex;
   justify-content: center;
@@ -138,7 +138,7 @@ body {
 }
 .links a:hover { text-decoration: underline; }
 
-/* ---------------- ROADMAP ---------------- */
+/* ---------------- ROADMAP (still used by Topics Covered) ---------------- */
 .roadmap { display: flex; flex-direction: column; gap: 25px; margin-top: 20px; }
 
 .step { display: flex; gap: 18px; align-items: flex-start; }
@@ -256,9 +256,9 @@ footer {
         📊 Laboratories
       </a>
 
-    <a class="btn-exercises" href="#exercises">
-  🧩 Exercises
-</a>
+      <a class="btn-exercises" href="#exercises">
+        🧩 Exercises
+      </a>
 
       <a class="btn-data" href="#data">
         🗄️ Data
@@ -339,128 +339,130 @@ footer {
       <div class="step">
         <div class="step-number">1</div>
         <div class="step-text">
-          <strong>Introduction to R and RStudio</strong> — setting up the
-          environment and learning how to write and run code for data analysis.
+          <strong>First Steps in R</strong> — installing R and RStudio;
+          data types (numeric, character, logical); vectors, lists, and
+          data frames; why R instead of Excel (reproducibility).
         </div>
       </div>
 
       <div class="step">
         <div class="step-number">2</div>
         <div class="step-text">
-          <strong>Data Types and Data Structures</strong> — understanding
-          vectors, matrices, lists, and data frames as the foundations of
-          data analysis in R.
+          <strong>Descriptive Statistics with the Economic Census</strong> —
+          categorical variables (sector, establishment size, state);
+          frequency tables, measures of central tendency and dispersion.
         </div>
       </div>
 
       <div class="step">
         <div class="step-number">3</div>
         <div class="step-text">
-          <strong>Data Manipulation with dplyr</strong> — filtering,
-          transforming, and summarizing datasets to prepare economic data
-          for analysis.
+          <strong>Getting Data via API</strong> — programmatic download of
+          economic series using Banxico's SIE API (<code>httr2</code>,
+          <code>jsonlite</code>).
         </div>
       </div>
 
       <div class="step">
         <div class="step-number">4</div>
         <div class="step-text">
-          <strong>Data Visualization with ggplot2</strong> — creating clear
-          and informative graphs to explore patterns in economic data.
+          <strong>Data Manipulation</strong> — <code>dplyr</code> and
+          <code>tidyr</code> (filter, group_by, summarise, mutate,
+          left_join, pivot_longer/wider) with SIAP agricultural data.
         </div>
       </div>
 
       <div class="step">
         <div class="step-number">5</div>
         <div class="step-text">
-          <strong>Complex Survey Design and Weighted Estimation</strong> — working
-          with nationally representative surveys and correctly applying
-          expansion factors to obtain valid population estimates.
+          <strong>Data Visualization</strong> — publication-ready graphics
+          with <code>ggplot2</code>; best practices; static maps with
+          <code>sf</code>.
         </div>
       </div>
 
       <div class="step">
         <div class="step-number">6</div>
         <div class="step-text">
-          <strong>Poverty and Inequality Measurement</strong> — estimating
-          income-based poverty rates, welfare lines, decile analysis,
-          and inequality indicators such as the Gini coefficient.
+          <strong>Climate Time Series</strong> — downloading, cleaning, and
+          visualizing historical CRU series (precipitation, temperature)
+          1901–2024; reading data with <code>readr</code>.
         </div>
       </div>
 
       <div class="step">
         <div class="step-number">7</div>
         <div class="step-text">
-          <strong>Time Series Analysis</strong> — studying the dynamics of
-          economic variables over time.
+          <strong>Quarterly Macroeconomic Series</strong> — the implicit
+          GDP deflator: series manipulation, custom functions, dates with
+          <code>lubridate</code>, deflator vs. CPI comparison.
         </div>
       </div>
 
       <div class="step">
         <div class="step-number">8</div>
         <div class="step-text">
-          <strong>Linear Regression Models</strong> — estimating and
-          interpreting basic econometric models using R.
+          <strong>Complex Survey Design</strong> — poverty estimation with
+          ENIGH 2024: sample design (<code>survey</code>/<code>srvyr</code>),
+          income deciles, the Gini coefficient, poverty lines.
         </div>
       </div>
 
       <div class="step">
         <div class="step-number">9</div>
         <div class="step-text">
-          <strong>Economic Forecasting</strong> — using time series tools
-          to generate and evaluate predictions of economic variables.
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ═══════════════════ ROADMAP ═══════════════════ -->
-  <section class="section section-light">
-    <h2 class="section-title">Course Roadmap</h2>
-
-    <div class="roadmap">
-
-      <div class="step">
-        <div class="step-number">1</div>
-        <div class="step-text">
-          <strong>Foundations of R</strong> — understanding objects, vectors,
-          and data structures in base R.
+          <strong>Linear Regression: Foundations and Interpretation</strong> —
+          simple and multiple models with Penn World Table data;
+          Gauss-Markov assumptions, interpreting coefficients, goodness of
+          fit (R²).
         </div>
       </div>
 
       <div class="step">
-        <div class="step-number">2</div>
+        <div class="step-number">10</div>
         <div class="step-text">
-          <strong>Data Analysis and Visualization</strong> — applying data
-          exploration and visualization techniques using climate data from
-          the CRU dataset.
+          <strong>Linear Regression: Robustness Checks</strong> — on the
+          same Penn World Table model: multicollinearity (VIF),
+          heteroskedasticity (Breusch-Pagan, robust HC errors), functional
+          form (RESET test).
         </div>
       </div>
 
       <div class="step">
-        <div class="step-number">3</div>
+        <div class="step-number">11</div>
         <div class="step-text">
-          <strong>Agricultural Export Analysis with dplyr</strong> — cleaning
-          and transforming data to analyze Mexico's main agricultural export
-          products using SIAP datasets under the TMEC framework.
+          <strong>Binary Choice Models: Logit and Probit</strong> — labor
+          force participation and informality with the ENOE; marginal
+          effects, confusion matrix, and the ROC curve.
         </div>
       </div>
 
       <div class="step">
-        <div class="step-number">4</div>
+        <div class="step-number">12</div>
         <div class="step-text">
-          <strong>Household Income and Poverty Estimation</strong> — working
-          with the ENIGH 2024 microdata to estimate poverty rates, analyze
-          income inequality, and decompose household expenditure by decile.
+          <strong>Causal Inference: Foundations and Difference-in-Differences</strong>
+          — correlation vs. causation, omitted variable bias, natural
+          experiments; the Bangladesh microfinance case (Pitt &amp;
+          Khandker, 1998): cross-sectional and panel DiD, the parallel
+          trends assumption.
         </div>
       </div>
 
       <div class="step">
-        <div class="step-number">5</div>
+        <div class="step-number">13</div>
         <div class="step-text">
-          <strong>Time Series Analysis in R</strong> — using time series
-          methods to explore inflation dynamics and macroeconomic trends.
+          <strong>Reproducibility and Course Wrap-up</strong> — best
+          practices with R Markdown and Git/GitHub; building a student's
+          own lab from a dataset of their choice.
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">14</div>
+        <div class="step-text">
+          <strong>Final Integrative Project</strong> — a short applied
+          analysis (teams of 2–3 students) combining at least two tools
+          from the course on a real dataset.
         </div>
       </div>
 
@@ -481,42 +483,6 @@ footer {
           <div class="card-sub">Vectors · structures · basic manipulation</div>
         </div>
       </a>
-
-      <a class="card" href="Laboratories/Laboratory-1/Laboratory-1.html">
-        <div class="card-icon">🌦️</div>
-        <div>
-          <div class="card-label">Lab 01</div>
-          <div class="card-title">Analyzing Climate Variables</div>
-          <div class="card-sub">CRU data · precipitation · temperature</div>
-        </div>
-      </a>
-
-      <a class="card" href="Laboratories/Laboratory-2/Laboratory-2.html">
-        <div class="card-icon">🌱</div>
-        <div>
-          <div class="card-label">Lab 02</div>
-          <div class="card-title">Agricultural Export Products</div>
-          <div class="card-sub">SIAP · Mexico's main export crops · TMEC</div>
-        </div>
-      </a>
-
-      <a class="card" href="Laboratories/Laboratory-3/Laboratory-3.html">
-        <div class="card-icon">🏠</div>
-        <div>
-          <div class="card-label">Lab 03</div>
-          <div class="card-title">Poverty Estimation with ENIGH</div>
-          <div class="card-sub">ENIGH 2024 · income · inequality · welfare</div>
-        </div>
-      </a>
-
-      <div class="card card-disabled">
-        <div class="card-icon">📈</div>
-        <div>
-          <div class="card-label">Lab 04 · Coming soon</div>
-          <div class="card-title">Time Series Analysis</div>
-          <div class="card-sub">Inflation dynamics · macroeconomic trends</div>
-        </div>
-      </div>
 
     </div>
   </section>
@@ -539,55 +505,6 @@ footer {
   <!-- ═══════════════════ DATA ═══════════════════ -->
   <section id="data" class="section section-dark">
     <h2 class="section-title">Data</h2>
-
-    <p style="margin-bottom:24px; opacity:.9;">
-      Datasets used across the laboratories. Download them directly or
-      clone the repository to access all files locally.
-    </p>
-
-    <div class="card-grid">
-
-      <a class="card"
-         href="https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.09/"
-         target="_blank">
-        <div class="card-icon">🌍</div>
-        <div>
-          <div class="card-label">Lab 01</div>
-          <div class="card-title">CRU TS 4.09</div>
-          <div class="card-sub">Climate Research Unit · 1901–2024</div>
-        </div>
-      </a>
-
-      <a class="card" href="Data/cultivos.xlsx">
-        <div class="card-icon">🌾</div>
-        <div>
-          <div class="card-label">Lab 02</div>
-          <div class="card-title">cultivos.xlsx</div>
-          <div class="card-sub">SIAP · agricultural production in Mexico</div>
-        </div>
-      </a>
-
-      <a class="card"
-         href="https://www.inegi.org.mx/programas/enigh/nc/2024/"
-         target="_blank">
-        <div class="card-icon">🏘️</div>
-        <div>
-          <div class="card-label">Lab 03</div>
-          <div class="card-title">ENIGH 2024</div>
-          <div class="card-sub">INEGI · household income &amp; expenditure survey</div>
-        </div>
-      </a>
-
-      <div class="card card-disabled">
-        <div class="card-icon">💹</div>
-        <div>
-          <div class="card-label">Lab 04 · Coming soon</div>
-          <div class="card-title">Macroeconomic Indicators</div>
-          <div class="card-sub">Inflation · GDP · monetary policy</div>
-        </div>
-      </div>
-
-    </div>
   </section>
 
   <!-- ═══════════════════ REPOSITORY ═══════════════════ -->
@@ -603,15 +520,6 @@ footer {
       Open the project in RStudio, navigate to a laboratory folder,
       open the <code>.Rmd</code> file and run the code or knit the document
       to reproduce the analysis.
-    </p>
-    <br>
-    <p>
-      <strong>Note for Laboratory 3:</strong> The ENIGH 2024 microdata file
-      (<code>concentradohogar.csv</code>) must be downloaded separately from
-      the <a href="https://www.inegi.org.mx/programas/enigh/nc/2024/"
-      target="_blank" style="color:var(--dark); font-weight:600;">INEGI website</a>
-      and placed in the <code>Laboratories/Laboratory-3/</code> folder before
-      running the lab.
     </p>
   </section>
 
