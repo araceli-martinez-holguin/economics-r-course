@@ -206,6 +206,60 @@ body {
   color: #2F4F4F;
 }
 
+/* ---------------- DATA TABLE ---------------- */
+.data-table-wrap {
+  overflow-x: auto;
+  margin-top: 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(141,238,238,.25);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .92rem;
+}
+
+.data-table th, .data-table td {
+  padding: 16px 20px;
+  text-align: left;
+}
+
+.data-table thead th {
+  background: rgba(0,0,0,.25);
+  color: var(--light1);
+  font-weight: 600;
+  font-size: .78rem;
+  letter-spacing: .04em;
+}
+
+.data-table tbody tr {
+  border-top: 1px solid rgba(255,255,255,.08);
+  transition: background .2s;
+}
+
+.data-table tbody tr:hover { background: rgba(141,238,238,.08); }
+
+.data-table .status-available {
+  color: #9BE79B;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.data-table .status-pending {
+  color: rgba(248,255,255,.55);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.data-table a.view-link {
+  color: var(--light2);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.data-table a.view-link:hover { text-decoration: underline; }
+
 /* ---------------- CODE BLOCK ---------------- */
 pre {
   background: #1b2e2e;
@@ -231,6 +285,7 @@ footer {
   .profile-pic { margin: auto; }
   .hero-buttons { flex-direction: column; align-items: center; }
   .section { padding: 35px 25px; }
+  .data-table th, .data-table td { padding: 12px 14px; font-size: .85rem; }
 }
 
 </style>
@@ -499,12 +554,42 @@ footer {
           <div class="card-sub">Tipos de objetos · histogramas · loops</div>
         </div>
       </a>
+
+      <a class="card" href="Exercises/Exercise-1/Exercise1_ENOE_Sociodemographics.html">
+        <div class="card-icon">🧩</div>
+        <div>
+          <div class="card-label">Exercise 01</div>
+          <div class="card-title">Sociodemographics of the Labor Market</div>
+          <div class="card-sub">ENOE · labor force · descriptive statistics</div>
+        </div>
+      </a>
     </div>
   </section>
 
   <!-- ═══════════════════ DATA ═══════════════════ -->
   <section id="data" class="section section-dark">
     <h2 class="section-title">Data</h2>
+
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Dataset name</th>
+            <th>Topic</th>
+            <th>Status</th>
+            <th>Link</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>ENOE</td>
+            <td>Sociodemographics of the labor market</td>
+            <td class="status-available">✅ Available</td>
+            <td><a class="view-link" href="Data/ENOE/ENOE.html">View</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <!-- ═══════════════════ REPOSITORY ═══════════════════ -->
