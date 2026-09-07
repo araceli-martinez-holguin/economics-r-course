@@ -42,6 +42,7 @@ economics-r-course/
 ├── Exercises/                 # Short practice exercises (.Rmd + rendered .html)
 │   └── Exercise-0/            # Objects in R with the Gapminder dataset
 ├── Data/                      # Datasets used across labs (populated as labs are added)
+│   └── Data-1/                # Sociodemographics of the Mexican labour market (ENOE) dataset
 ├── index.html                 # Course website homepage
 ├── styles.css                 # Course website stylesheet
 └── README.md                  # You are here
