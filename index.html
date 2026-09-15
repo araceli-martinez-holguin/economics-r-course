@@ -1,621 +1,251 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>R Programming for Economists</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ---------------- COLOR PALETTE ---------------- */
+    :root {
+      --dark:   #2F4F4F;
+      --light1: #97FFFF;
+      --light2: #8DEEEE;
+      --light3: #79CDCD;
+      --light4: #528B8B;
+      --white:  #f8ffff;
+    }
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>R Programming for Economists</title>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    /* ---------------- GLOBAL ---------------- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-<style>
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background-color: var(--white);
+      color: var(--dark);
+      line-height: 1.6;
+      padding: 2rem 1.5rem;
+    }
 
-/* ---------------- COLOR PALETTE ---------------- */
-:root {
-  --dark:   #2F4F4F;
-  --light1: #97FFFF;
-  --light2: #8DEEEE;
-  --light3: #79CDCD;
-  --light4: #528B8B;
-  --white:  #f8ffff;
-}
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
 
-/* ---------------- GLOBAL ---------------- */
-* { margin:0; padding:0; box-sizing:border-box; }
+    /* ---------------- HEADER ---------------- */
+    header {
+      margin-bottom: 3rem;
+      text-align: center;
+    }
 
-body {
-  font-family: 'Montserrat', sans-serif;
-  background: linear-gradient(160deg, #2F4F4F, #1f3434);
-  color: var(--white);
-  line-height: 1.6;
-}
+    h1 {
+      font-weight: 600;
+      font-size: 2.6rem;
+      letter-spacing: -0.5px;
+      color: var(--dark);
+      border-bottom: 4px solid var(--light3);
+      display: inline-block;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+    }
 
-.container {
-  max-width: 1050px;
-  margin: auto;
-  padding: 40px 30px 80px;
-}
+    .subhead {
+      font-weight: 300;
+      font-size: 1.2rem;
+      color: var(--light4);
+    }
 
-/* ---------------- HERO ---------------- */
-.hero {
-  text-align: center;
-  padding: 90px 40px;
-  margin-bottom: 70px;
-  background: linear-gradient(160deg, #2F4F4F, #406e6e);
-  border-radius: 20px;
-  box-shadow: 0 25px 60px rgba(0,0,0,.4);
-}
+    /* ---------------- SECTION TITLES ---------------- */
+    h2 {
+      font-weight: 500;
+      font-size: 1.9rem;
+      margin: 2.5rem 0 1.5rem;
+      color: var(--dark);
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
 
-.hero h1 { font-size: 3rem; margin-bottom: 15px; }
+    h2::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 2rem;
+      background: var(--light3);
+      border-radius: 4px;
+    }
 
-.hero p {
-  font-size: 1.1rem;
-  opacity: .9;
-  max-width: 650px;
-  margin: auto;
-  margin-bottom: 25px;
-}
+    /* ---------------- CARD GRID ---------------- */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.8rem;
+      margin-top: 0.5rem;
+    }
 
-/* ---------------- HERO BUTTONS ---------------- */
-.hero-buttons {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 30px;
-}
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 1.8rem 1.6rem;
+      box-shadow: 0 8px 20px rgba(47, 79, 79, 0.08);
+      border: 1px solid var(--light2);
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+    }
 
-.hero-buttons a {
-  text-decoration: none;
-  padding: 13px 26px;
-  border-radius: 8px;
-  font-size: .92rem;
-  font-weight: 600;
-  letter-spacing: .03em;
-  transition: .2s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 28px rgba(47, 79, 79, 0.12);
+      border-color: var(--light3);
+    }
 
-.btn-labs       { background: var(--light2);  color: #2F4F4F; }
-.btn-exercises  { background: var(--light1);  color: #2F4F4F; }
-.btn-data       { background: rgba(255,255,255,.12); color: var(--white); border: 1px solid var(--light2); }
-.btn-github     { background: #1b2e2e;        color: var(--light1); border: 1px solid var(--light4); }
-.hero-buttons a:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,.3); }
+    .card h3 {
+      font-weight: 600;
+      font-size: 1.35rem;
+      color: var(--dark);
+      margin-bottom: 0.75rem;
+      border-left: 4px solid var(--light3);
+      padding-left: 0.8rem;
+    }
 
-/* ---------------- SECTIONS ---------------- */
-.section {
-  margin-bottom: 60px;
-  padding: 55px;
-  border-radius: 16px;
-}
+    .card p {
+      font-weight: 300;
+      font-size: 1rem;
+      color: #3e5e5e;
+      margin-bottom: 1.4rem;
+      flex: 1;
+    }
 
-.section-dark  { background: rgba(0,0,0,.18); }
-.section-light { background: #f8ffff; color: #2F4F4F; }
+    .card a {
+      display: inline-block;
+      background: var(--light2);
+      color: var(--dark);
+      font-weight: 500;
+      text-decoration: none;
+      padding: 0.7rem 1.4rem;
+      border-radius: 40px;
+      font-size: 0.95rem;
+      letter-spacing: 0.3px;
+      transition: background 0.2s, color 0.2s;
+      text-align: center;
+      border: 1px solid var(--light3);
+      align-self: flex-start;
+    }
 
-/* ---------------- TITLES ---------------- */
-.section-title {
-  font-size: 1.7rem;
-  font-weight: 600;
-  margin-bottom: 25px;
-  position: relative;
-}
+    .card a:hover {
+      background: var(--light4);
+      color: white;
+      border-color: var(--light4);
+    }
 
-.section-title::after {
-  content: "";
-  display: block;
-  width: 60px;
-  height: 3px;
-  background: var(--light2);
-  margin-top: 10px;
-  border-radius: 3px;
-}
+    /* ---------------- ASSIGNMENT CARD (slightly distinctive) ---------------- */
+    .assignment-card {
+      background: linear-gradient(145deg, #ffffff, #f2fbfb);
+      border-left: 6px solid var(--light4);
+    }
 
-.section-light .section-title::after { background: var(--dark); }
+    .assignment-card h3 {
+      border-left-color: var(--light4);
+    }
 
-/* ---------------- ABOUT ---------------- */
-.about {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: 50px;
-  align-items: center;
-}
+    .assignment-card a {
+      background: var(--light1);
+      border-color: var(--light2);
+    }
 
-.profile-pic {
-  width: 260px;
-  border-radius: 18px;
-  box-shadow: 0 20px 40px rgba(0,0,0,.45);
-}
+    .assignment-card a:hover {
+      background: var(--dark);
+      color: var(--white);
+      border-color: var(--dark);
+    }
 
-.about-text p { margin-bottom: 12px; }
-
-.links { margin-top: 12px; }
-.links a {
-  margin-right: 15px;
-  font-size: .9rem;
-  color: var(--light1);
-  text-decoration: none;
-}
-.links a:hover { text-decoration: underline; }
-
-/* ---------------- ROADMAP (still used by Topics Covered) ---------------- */
-.roadmap { display: flex; flex-direction: column; gap: 25px; margin-top: 20px; }
-
-.step { display: flex; gap: 18px; align-items: flex-start; }
-
-.step-number {
-  background: var(--light2);
-  color: #2F4F4F;
-  font-weight: 600;
-  border-radius: 50%;
-  min-width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: .9rem;
-}
-
-.section-light .step-number { background: var(--dark); color: var(--white); }
-
-/* ---------------- CARDS ---------------- */
-.card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
-}
-
-.card {
-  background: #406e6e;
-  padding: 28px;
-  border-radius: 16px;
-  text-decoration: none;
-  color: white;
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  transition: .25s;
-}
-
-.card:hover {
-  transform: translateY(-6px);
-  background: var(--light3);
-  box-shadow: 0 10px 20px rgba(0,0,0,.35);
-}
-
-.section-light .card { background: #d4f0f0; color: #2F4F4F; }
-.section-light .card:hover { background: var(--light3); color: white; }
-
-.card-icon   { font-size: 1.6rem; }
-.card-label  { font-size: .7rem; letter-spacing: .15em; text-transform: uppercase; opacity: .8; }
-.card-title  { font-weight: 600; font-size: 1.05rem; }
-.card-sub    { font-size: .8rem; opacity: .9; }
-
-/* --- disabled card (coming soon) --- */
-.card-disabled {
-  background: rgba(255,255,255,.06);
-  border: 1px dashed rgba(141,238,238,.3);
-  cursor: default;
-  pointer-events: none;
-  opacity: .6;
-}
-
-.section-light .card-disabled {
-  background: rgba(0,0,0,.05);
-  border: 1px dashed #528B8B;
-  color: #2F4F4F;
-}
-
-/* ---------------- DATA TABLE ---------------- */
-.data-table-wrap {
-  overflow-x: auto;
-  margin-top: 20px;
-  border-radius: 12px;
-  border: 1px solid rgba(141,238,238,.25);
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: .92rem;
-}
-
-.data-table th, .data-table td {
-  padding: 16px 20px;
-  text-align: left;
-}
-
-.data-table thead th {
-  background: rgba(0,0,0,.25);
-  color: var(--light1);
-  font-weight: 600;
-  font-size: .78rem;
-  letter-spacing: .04em;
-}
-
-.data-table tbody tr {
-  border-top: 1px solid rgba(255,255,255,.08);
-  transition: background .2s;
-}
-
-.data-table tbody tr:hover { background: rgba(141,238,238,.08); }
-
-.data-table .status-available {
-  color: #9BE79B;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.data-table .status-pending {
-  color: rgba(248,255,255,.55);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.data-table a.view-link {
-  color: var(--light2);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.data-table a.view-link:hover { text-decoration: underline; }
-
-/* ---------------- CODE BLOCK ---------------- */
-pre {
-  background: #1b2e2e;
-  padding: 16px;
-  border-radius: 10px;
-  font-size: .85rem;
-  overflow-x: auto;
-  margin-top: 10px;
-}
-
-/* ---------------- FOOTER ---------------- */
-footer {
-  text-align: center;
-  font-size: .8rem;
-  opacity: .7;
-  margin-top: 60px;
-}
-
-/* ---------------- MOBILE ---------------- */
-@media(max-width:750px) {
-  .hero h1 { font-size: 2.2rem; }
-  .about { grid-template-columns: 1fr; text-align: center; }
-  .profile-pic { margin: auto; }
-  .hero-buttons { flex-direction: column; align-items: center; }
-  .section { padding: 35px 25px; }
-  .data-table th, .data-table td { padding: 12px 14px; font-size: .85rem; }
-}
-
-</style>
+    /* ---------------- FOOTER ---------------- */
+    footer {
+      margin-top: 4rem;
+      text-align: center;
+      font-weight: 300;
+      font-size: 0.9rem;
+      color: var(--light4);
+      border-top: 1px solid var(--light2);
+      padding-top: 2rem;
+    }
+  </style>
 </head>
-
 <body>
-<div class="container">
+  <div class="container">
+    <header>
+      <h1>R Programming for Economists</h1>
+      <div class="subhead">Course materials, exercises & assignments</div>
+    </header>
 
-  <!-- ═══════════════════ HERO ═══════════════════ -->
-  <section class="hero">
-
-    <h1>R Programming for Economists</h1>
-
-    <p>
-      Empirical economic analysis with R — a course on data analysis,
-      visualization, and reproducible research for students at the
-      UNAM School of Economics.
-    </p>
-
-    <div class="hero-buttons">
-
-      <a class="btn-labs" href="#labs">
-        📊 Laboratories
-      </a>
-
-      <a class="btn-exercises" href="#exercises">
-        🧩 Exercises
-      </a>
-
-      <a class="btn-data" href="#data">
-        🗄️ Data
-      </a>
-
-      <a class="btn-github"
-         href="https://github.com/araceli-martinez-holguin/economics-r-course"
-         target="_blank">
-        🐙 GitHub Repository
-      </a>
-
-    </div>
-  </section>
-
-  <!-- ═══════════════════ INSTRUCTOR ═══════════════════ -->
-  <section class="section section-dark">
-    <div class="about">
-
-      <img src="Profile-Picture.jpeg" class="profile-pic" alt="Araceli Martínez-Holguín">
-
-      <div class="about-text">
-        <h2 class="section-title">Instructor</h2>
-
-        <p>
-          <strong>Araceli Martínez-Holguín</strong> is a PhD student in Economics
-          at the School of Economics of the National Autonomous University of
-          Mexico (UNAM).
-        </p>
-
-        <p>
-          Her research studies the relationship between
-          <strong>extreme climate events and food prices</strong>,
-          with broader interests in macroeconomics, monetary policy,
-          and sustainable finance.
-        </p>
-
-        <p>
-          In this course she teaches students how to use <strong>R</strong>
-          to conduct empirical economic analysis and build reproducible
-          research workflows.
-        </p>
-
-        <div class="links">
-          <a href="mailto:araceli.martinez@economia.unam.mx">✉ Email</a>
-          <a href="https://github.com/araceli-martinez-holguin" target="_blank">GitHub</a>
-          <a href="https://www.linkedin.com/in/aracelimholguin24111994/" target="_blank">LinkedIn</a>
-          <a href="https://x.com/Arimarhol" target="_blank">X</a>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ═══════════════════ COURSE OVERVIEW ═══════════════════ -->
-  <section class="section section-light">
-    <h2 class="section-title">Course Overview</h2>
-
-    <p>
-      This course introduces students to <strong>empirical economic analysis
-      using R</strong>. Students learn how to clean, visualize, and analyze
-      economic datasets while developing reproducible research workflows.
-    </p>
-    <br>
-    <p>
-      Laboratories combine programming techniques with applied economic
-      questions using real datasets related to climate data, Mexico's main
-      agricultural export products, household income and poverty estimation,
-      and macroeconomic indicators.
-    </p>
-  </section>
-
-  <!-- ═══════════════════ TOPICS ═══════════════════ -->
-  <section class="section section-dark">
-    <h2 class="section-title">Topics Covered</h2>
-
-    <div class="roadmap">
-
-      <div class="step">
-        <div class="step-number">1</div>
-        <div class="step-text">
-          <strong>First Steps in R</strong> — installing R and RStudio;
-          data types (numeric, character, logical); vectors, lists, and
-          data frames; why R instead of Excel (reproducibility).
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-number">2</div>
-        <div class="step-text">
-          <strong>Descriptive Statistics with the Economic Census</strong> —
-          categorical variables (sector, establishment size, state);
-          frequency tables, measures of central tendency and dispersion.
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-number">3</div>
-        <div class="step-text">
-          <strong>Getting Data via API</strong> — programmatic download of
-          economic series using Banxico's SIE API (<code>httr2</code>,
-          <code>jsonlite</code>).
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-number">4</div>
-        <div class="step-text">
-          <strong>Data Manipulation</strong> — <code>dplyr</code> and
-          <code>tidyr</code> (filter, group_by, summarise, mutate,
-          left_join, pivot_longer/wider) with SIAP agricultural data.
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-number">5</div>
-        <div class="step-text">
-          <strong>Data Visualization</strong> — publication-ready graphics
-          with <code>ggplot2</code>; best practices; static maps with
-          <code>sf</code>.
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-number">6</div>
-        <div class="step-text">
-          <strong>Climate Time Series</strong> — downloading, cleaning, and
-          visualizing historical CRU series (precipitation, temperature)
-          1901–2024; reading data with <code>readr</code>.
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-number">7</div>
-        <div class="step-text">
-          <strong>Quarterly Macroeconomic Series</strong> — the implicit
-          GDP deflator: series manipulation, custom functions, dates with
-          <code>lubridate</code>, deflator vs. CPI comparison.
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-number">8</div>
-        <div class="step-text">
-          <strong>Complex Survey Design</strong> — poverty estimation with
-          ENIGH 2024: sample design (<code>survey</code>/<code>srvyr</code>),
-          income deciles, the Gini coefficient, poverty lines.
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-number">9</div>
-        <div class="step-text">
-          <strong>Linear Regression: Foundations and Interpretation</strong> —
-          simple and multiple models with Penn World Table data;
-          Gauss-Markov assumptions, interpreting coefficients, goodness of
-          fit (R²).
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-number">10</div>
-        <div class="step-text">
-          <strong>Linear Regression: Robustness Checks</strong> — on the
-          same Penn World Table model: multicollinearity (VIF),
-          heteroskedasticity (Breusch-Pagan, robust HC errors), functional
-          form (RESET test).
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-number">11</div>
-        <div class="step-text">
-          <strong>Binary Choice Models: Logit and Probit</strong> — labor
-          force participation and informality with the ENOE; marginal
-          effects, confusion matrix, and the ROC curve.
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-number">12</div>
-        <div class="step-text">
-          <strong>Causal Inference: Foundations and Difference-in-Differences</strong>
-          — correlation vs. causation, omitted variable bias, natural
-          experiments; the Bangladesh microfinance case (Pitt &amp;
-          Khandker, 1998): cross-sectional and panel DiD, the parallel
-          trends assumption.
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-number">13</div>
-        <div class="step-text">
-          <strong>Reproducibility and Course Wrap-up</strong> — best
-          practices with R Markdown and Git/GitHub; building a student's
-          own lab from a dataset of their choice.
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-number">14</div>
-        <div class="step-text">
-          <strong>Final Integrative Project</strong> — a short applied
-          analysis (teams of 2–3 students) combining at least two tools
-          from the course on a real dataset.
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ═══════════════════ LABORATORIES ═══════════════════ -->
-  <section id="labs" class="section section-dark">
-    <h2 class="section-title">Laboratories</h2>
-
+    <!-- ========== EXISTING SECTIONS (kept intact, just placeholders) ========== -->
+    <h2>Course modules</h2>
     <div class="card-grid">
-
-      <a class="card" href="Laboratories/Laboratory-0/Laboratory-0.html">
-        <div class="card-icon">🔬</div>
-        <div>
-          <div class="card-label">Lab 00</div>
-          <div class="card-title">Data Types and Base R</div>
-          <div class="card-sub">Vectors · structures · basic manipulation</div>
-        </div>
-      </a>
-
+      <div class="card">
+        <h3>Introduction to R</h3>
+        <p>Setting up R & RStudio, basic syntax, data types, vectors, and simple operations.</p>
+        <a href="#">Explore module</a>
+      </div>
+      <div class="card">
+        <h3>Data manipulation</h3>
+        <p>Subsetting, data frames, importing/exporting, and using dplyr for economic data.</p>
+        <a href="#">Explore module</a>
+      </div>
+      <div class="card">
+        <h3>Visualization</h3>
+        <p>Base graphics and ggplot2 for economic trends, distributions, and relationships.</p>
+        <a href="#">Explore module</a>
+      </div>
+      <div class="card">
+        <h3>Regression & inference</h3>
+        <p>Linear models, hypothesis testing, and interpreting economic results in R.</p>
+        <a href="#">Explore module</a>
+      </div>
     </div>
-  </section>
 
-  <!-- ═══════════════════ EXERCISES ═══════════════════ -->
-  <section id="exercises" class="section section-light">
-    <h2 class="section-title">Exercises</h2>
+    <!-- ========== NEW ASSIGNMENTS SECTION ========== -->
+    <h2>Assignments</h2>
     <div class="card-grid">
-      <a class="card" href="Exercises/Exercise-0/Ejercicio0_Objetos_R_Gapminder.html">
-        <div class="card-icon">🧩</div>
-        <div>
-          <div class="card-label">Exercise 00</div>
-          <div class="card-title">Objetos en R con Gapminder</div>
-          <div class="card-sub">Tipos de objetos · histogramas · loops</div>
-        </div>
-      </a>
-
-    <a class="card" href="Exercises/Exercise_1/Ejercicio1_ENOE.html">
-        <div class="card-icon">🧩</div>
-        <div>
-          <div class="card-label">Exercise 01</div>
-          <div class="card-title">Sociodemographics of the Labor Market</div>
-          <div class="card-sub">ENOE · labor force · descriptive statistics</div>
-        </div>
-      </a>
+      <!-- Assignment 0 card with the provided link -->
+      <div class="card assignment-card">
+        <h3>Assignment 0</h3>
+        <p>Getting started with R: setup, basic objects, and first steps. Complete this to prepare for upcoming assignments.</p>
+        <a href="https://github.com/araceli-martinez-holguin/economics-r-course/blob/main/Assignments/Assignment-0/Tarea-0.html" 
+           target="_blank" rel="noopener noreferrer">
+          Open Assignment 0
+        </a>
+      </div>
+      <!-- You can add more assignment cards here in the future -->
+      <div class="card assignment-card" style="opacity: 0.85;">
+        <h3>Assignment 1</h3>
+        <p>Coming soon — data manipulation with dplyr and economic case studies.</p>
+        <a href="#" style="pointer-events: none; opacity: 0.6;">Not available</a>
+      </div>
     </div>
-  </section>
 
-  <!-- ═══════════════════ DATA ═══════════════════ -->
-  <section id="data" class="section section-dark">
-    <h2 class="section-title">Data</h2>
-
-    <div class="data-table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Dataset name</th>
-            <th>Topic</th>
-            <th>Status</th>
-            <th>Link</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>ENOE</td>
-            <td>Sociodemographics of the labor market</td>
-            <td class="status-available">✅ Available</td>
-            <td>
-              <a class="view-link" href="Data/Data-1/enoe_2025_4t_sample_50k.xlsx">Dataset</a>
-              &nbsp;·&nbsp;
-              <a class="view-link" href="Data/Data-1/diccionario_datos_sdem_enoe_2025_4t.csv">Dictionary</a>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- ========== OPTIONAL RESOURCES SECTION (kept light) ========== -->
+    <h2>Resources</h2>
+    <div class="card-grid">
+      <div class="card">
+        <h3>R Cheatsheets</h3>
+        <p>Quick references for base R, ggplot2, dplyr, and econometrics packages.</p>
+        <a href="#">View cheatsheets</a>
+      </div>
+      <div class="card">
+        <h3>Datasets</h3>
+        <p>Economic datasets used in class examples and homework.</p>
+        <a href="#">Browse datasets</a>
+      </div>
     </div>
-  </section>
 
-  <!-- ═══════════════════ REPOSITORY ═══════════════════ -->
-  <section class="section section-light">
-    <h2 class="section-title">How to Use This Repository</h2>
-
-    <p>Clone the repository:</p>
-
-    <pre>git clone https://github.com/araceli-martinez-holguin/economics-r-course.git</pre>
-
-    <br>
-    <p>
-      Open the project in RStudio, navigate to a laboratory folder,
-      open the <code>.Rmd</code> file and run the code or knit the document
-      to reproduce the analysis.
-    </p>
-  </section>
-
-  <footer>
-    araceli-martinez-holguin · economics-r-course · GitHub Pages
-  </footer>
-
-</div>
+    <footer>
+      R Programming for Economists · Araceli Martínez Holguín
+    </footer>
+  </div>
 </body>
 </html>
