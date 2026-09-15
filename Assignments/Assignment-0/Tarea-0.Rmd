@@ -1,0 +1,584 @@
+---
+title: "Ejercicio 1: Población y PIB per cápita con Gapminder"
+author: "Araceli Martínez-Holguín"
+date: "15 de septiembre de 2026"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: show
+---
+
+# R para economistas
+
+## Objetivo
+
+En este ejercicio practicarás los conceptos y herramientas trabajados en el laboratorio **"Objetos en R utilizando Gapminder"**. Ahora nos concentraremos en dos variables económicas y demográficas:
+
+- **Población** (`pop`)
+- **PIB per cápita** (`gdpPercap`)
+
+Trabajarás con un corte transversal de países para el año **2007** y practicarás:
+
+1. identificación de tipos de objetos;
+2. creación y manipulación de vectores;
+3. variables lógicas y factores;
+4. filtros de un `data.frame`;
+5. histogramas y exploración de distribuciones;
+6. media, mediana, mínimo y máximo;
+7. selección de observaciones;
+8. ciclos `for`;
+9. clasificación de observaciones mediante condiciones;
+10. comparación entre continentes.
+
+> **Importante:** completa los ejercicios en el orden en que aparecen. Cada sección utiliza únicamente objetos que fueron creados en las secciones anteriores.
+
+---
+
+## 0. Instalación y carga de paquetes
+
+Si no tienes instalado `gapminder`, ejecuta una sola vez:
+
+```{r}
+# install.packages("gapminder")
+```
+
+Después carga el paquete:
+
+```{r}
+library(gapminder)
+```
+
+Carga la base de datos:
+
+```{r}
+data(gapminder)
+```
+
+Puedes consultar la base directamente en RStudio con:
+
+```{r, eval=FALSE}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+---
+
+# Parte 1 — Conociendo la base de datos
+
+## Ejercicio 1. Estructura de los datos
+
+Utiliza `str()`, `dim()`, `nrow()` y `ncol()` para responder las siguientes preguntas.
+
+### 1.1 Estructura
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+**Pregunta:** ¿Qué tipo de objeto es `gapminder` y qué variables contiene?
+
+Escribe tu respuesta aquí:
+
+> **Respuesta:** 
+
+### 1.2 Dimensiones
+
+Calcula el número de filas y columnas:
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+**Preguntas:**
+
+- ¿Cuántas observaciones contiene la base?
+- ¿Cuántas variables contiene?
+- ¿Qué representa una observación en esta base?
+
+> **Respuesta:** 
+
+### 1.3 Variables de interés
+
+En este ejercicio trabajaremos principalmente con:
+
+- `pop`: población
+- `gdpPercap`: PIB per cápita
+- `country`: país
+- `continent`: continente
+- `year`: año
+
+Utiliza `class()` para identificar el tipo de objeto de `pop` y `gdpPercap`.
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+**Pregunta:** ¿Qué diferencia existe entre el tipo de objeto de `pop` y el de `gdpPercap`?
+
+> **Respuesta:** 
+
+---
+
+# Parte 2 — Trabajando con el año 2007
+
+En el laboratorio trabajamos con un corte transversal de 2007 para tener una observación por país. Aquí haremos lo mismo.
+
+## Ejercicio 2. Crear el subconjunto de 2007
+
+Crea un nuevo objeto llamado `datos_2007` que contenga únicamente las observaciones correspondientes al año 2007.
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+Comprueba cuántas observaciones contiene:
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+Comprueba que existe una observación por país:
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+**Pregunta:** ¿Por qué es importante trabajar con un solo año cuando queremos comparar países entre sí?
+
+> **Respuesta:** 
+
+---
+
+# Parte 3 — Variables y categorización
+
+## Ejercicio 3. Población como objeto
+
+Crea un vector llamado `poblacion` que contenga la población de los países en 2007.
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+Comprueba su clase:
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+Ahora crea un vector llamado `pib_percapita` con el PIB per cápita de los países en 2007.
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+Comprueba su clase:
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+---
+
+## Ejercicio 4. Clasificación por tamaño de población
+
+Queremos crear una variable categórica que clasifique a los países según su población en 2007.
+
+Utiliza las siguientes reglas:
+
+- **"Población grande"**: más de 50 millones de habitantes.
+- **"Población pequeña/mediana"**: 50 millones o menos.
+
+Primero crea una variable lógica:
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+Después conviértelo en un factor llamado `categoria_poblacion`.
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+Comprueba:
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+**Pregunta:** ¿Cuántos países pertenecen a cada categoría?
+
+> **Respuesta:** 
+
+---
+
+## Ejercicio 5. Clasificación por PIB per cápita
+
+Ahora crea una variable categórica para clasificar los países según su PIB per cápita.
+
+Utiliza como punto de corte **10,000 USD**:
+
+- **"PIB per cápita alto"**: mayor o igual a 10,000 USD.
+- **"PIB per cápita bajo"**: menor a 10,000 USD.
+
+Primero crea el vector lógico:
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+Después crea el factor:
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+Finalmente, cuenta cuántos países pertenecen a cada categoría:
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+**Pregunta:** ¿Qué porcentaje de los países tiene un PIB per cápita alto?
+
+Pista: puedes utilizar `prop.table()`.
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+---
+
+# Parte 4 — Exploración visual
+
+Antes de calcular estadísticas, observa cómo se distribuyen las variables.
+
+## Ejercicio 6. Histograma de población
+
+Construye un histograma de la población de los países en 2007.
+
+Tu gráfico debe incluir:
+
+- un título;
+- nombre del eje X;
+- nombre del eje Y;
+- una línea vertical para la media;
+- una línea vertical para la mediana.
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+**Pregunta:** ¿La distribución de la población parece simétrica o sesgada? ¿Qué observaciones podrían explicar la forma de la distribución?
+
+> **Respuesta:** 
+
+---
+
+## Ejercicio 7. Histograma del PIB per cápita
+
+Construye un histograma del PIB per cápita.
+
+Incluye:
+
+- media;
+- mediana;
+- título;
+- nombres de los ejes.
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+Agrega las líneas correspondientes a la media y la mediana:
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+**Pregunta:** Compara visualmente la distribución del PIB per cápita con la distribución de la población.
+
+> **Respuesta:** 
+
+---
+
+# Parte 5 — Estadísticas descriptivas
+
+## Ejercicio 8. Media, mediana, mínimo y máximo
+
+Calcula para **población** y **PIB per cápita**:
+
+- media;
+- mediana;
+- mínimo;
+- máximo.
+
+Puedes utilizar `mean()`, `median()`, `min()` y `max()`.
+
+### Población
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+### PIB per cápita
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+### Interpretación
+
+**Pregunta 1:** ¿En cuál de las dos variables existe una mayor diferencia entre media y mediana?
+
+> **Respuesta:** 
+
+**Pregunta 2:** ¿Qué te dice esa diferencia sobre la distribución de la variable?
+
+> **Respuesta:** 
+
+---
+
+# Parte 6 — Filtrado y observaciones extremas
+
+## Ejercicio 9. Países más poblados
+
+Utiliza `which.max()` para identificar el país con mayor población en 2007.
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+Obtén también el valor de población correspondiente:
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+Ahora utiliza `which.min()` para encontrar el país con menor población.
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+**Pregunta:** ¿Cuáles son los dos países?
+
+> **Respuesta:** 
+
+---
+
+## Ejercicio 10. Países con PIB per cápita extremo
+
+Repite el procedimiento anterior para `gdpPercap`.
+
+Identifica:
+
+1. el país con mayor PIB per cápita;
+2. su PIB per cápita;
+3. el país con menor PIB per cápita;
+4. su PIB per cápita.
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+**Pregunta:** ¿Los países extremos de población coinciden con los extremos de PIB per cápita?
+
+> **Respuesta:** 
+
+---
+
+# Parte 7 — Practicando ciclos `for`
+
+En el laboratorio utilizamos ciclos `for` para recorrer observaciones y producir mensajes dependiendo de determinadas condiciones. Ahora harás algo similar, pero trabajando con población y PIB per cápita.
+
+## Ejercicio 11. Un subconjunto de países
+
+Selecciona los siguientes países:
+
+- Mexico
+- United States
+- Canada
+- Brazil
+- Argentina
+- Colombia
+- Germany
+- India
+- China
+
+Crea un subconjunto llamado `sub_datos`.
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+---
+
+## Ejercicio 12. Loop: clasificación por población
+
+Construye un `for` que recorra todos los países de `sub_datos`.
+
+Para cada país, imprime:
+
+- nombre del país;
+- población;
+- una clasificación.
+
+Utiliza estas categorías:
+
+- **"MUY POBLADO"** si la población es mayor o igual a 100 millones;
+- **"POBLACIÓN MENOR"** en caso contrario.
+
+La estructura inicial es:
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+---
+
+## Ejercicio 13. Loop: clasificación por PIB per cápita
+
+Ahora modifica el ejercicio anterior para clasificar a cada país según su PIB per cápita.
+
+Utiliza:
+
+- **"PIB ALTO"** si el PIB per cápita es mayor o igual a 15,000 USD;
+- **"PIB MEDIO/BAJO"** en caso contrario.
+
+Tu loop debe imprimir:
+
+```text
+País -> PIB per cápita: XXXX | clasificación
+```
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+---
+
+# Parte 8 — Loop sobre todos los países
+
+## Ejercicio 14. Comparar con la media
+
+Ahora trabajarás con los **142 países** de 2007.
+
+Ordena primero la base por país:
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+Construye un `for` que:
+
+1. recorra todos los países;
+2. obtenga el país;
+3. obtenga su PIB per cápita;
+4. compare el PIB per cápita del país con la media;
+5. indique si está **"SOBRE LA MEDIA"** o **"BAJO LA MEDIA"**.
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+### Extensión
+
+Agrega una condición para marcar:
+
+- el país con PIB per cápita máximo;
+- el país con PIB per cápita mínimo.
+
+Por ejemplo:
+
+```text
+Norway -> PIB per cápita: XXXX | SOBRE LA MEDIA <-- PIB MÁXIMO
+```
+
+---
+
+# Parte 9 — Población y PIB per cápita por continente
+
+## Ejercicio 15. Reporte por continente
+
+Utiliza un `for` para recorrer los continentes de la base.
+
+Primero identifica los continentes:
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+Para cada continente calcula:
+
+- número de países;
+- población promedio;
+- PIB per cápita promedio.
+
+Tu resultado debe tener una estructura similar a:
+
+```text
+Africa | Países: XX | Población promedio: XXXX | PIB per cápita promedio: XXXX
+Americas | Países: XX | Población promedio: XXXX | PIB per cápita promedio: XXXX
+...
+```
+
+Completa el siguiente código:
+
+```{r}
+# Completa aquí el código solicitado en las instrucciones de esta sección.
+```
+
+---
+
+# Parte 10 — Reflexión económica
+
+## Ejercicio 16. ¿Qué nos dicen los datos?
+
+Responde brevemente las siguientes preguntas utilizando los resultados obtenidos.
+
+### 16.1 Población
+
+¿Cuál continente presenta, en promedio, los países con mayor población? ¿Esto significa necesariamente que sea el continente con mayor PIB per cápita?
+
+> **Respuesta:** 
+
+### 16.2 PIB per cápita
+
+¿Qué continente presenta el mayor PIB per cápita promedio?
+
+> **Respuesta:** 
+
+### 16.3 Media vs. mediana
+
+¿Por qué puede ser importante reportar la mediana además de la media cuando analizamos variables como población o PIB per cápita?
+
+> **Respuesta:** 
+
+### 16.4 Población y desarrollo económico
+
+A partir de la exploración realizada, ¿observas una relación clara entre el tamaño de la población y el PIB per cápita?
+
+> **Respuesta:** 
+
+> **Importante:** esta última pregunta es una interpretación descriptiva. No significa que estemos identificando una relación causal.
+
+---
+
+# Entrega
+
+Tu entrega debe consistir en este documento **R Markdown (`.Rmd`)** correctamente completado y tejido a **HTML**.
+
+Antes de entregar, verifica que:
+
+- [ ] Todos los chunks de código ejecutan correctamente.
+- [ ] No existen objetos utilizados antes de ser creados.
+- [ ] Los gráficos tienen título y nombres de ejes.
+- [ ] Las respuestas escritas están completas.
+- [ ] Los loops producen resultados.
+- [ ] El documento puede reproducirse desde el inicio ejecutando **Knit**.
+- [ ] El archivo `.Rmd` se encuentra en la carpeta correspondiente del repositorio del curso.
+
+## Objetivo final
+
+Al terminar esta tarea deberías ser capaz de pasar de una base de datos a una primera descripción económica utilizando R: identificar variables, seleccionar observaciones, explorar distribuciones, calcular estadísticas, clasificar países y automatizar comparaciones mediante ciclos `for`.
