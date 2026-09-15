@@ -1,0 +1,675 @@
+---
+title: "Ejercicio 1: El Perfil Sociodemográfico de la ENOE"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+## ¿De qué trata este laboratorio?
+
+En este laboratorio vamos a explorar una base de datos real y grande: la
+**Encuesta Nacional de Ocupación y Empleo (ENOE)** del INEGI, correspondiente
+al cuarto trimestre de 2025 (una muestra de 50,000 personas encuestadas).
+
+La ENOE es la encuesta que usa el gobierno de México para calcular indicadores
+como la tasa de desempleo o el ingreso promedio de los trabajadores. Es una
+base "real": tiene más de 100 columnas, muchas con códigos numéricos en vez
+de texto (por ejemplo, `sex = 1` significa "Hombre"), y tiene valores
+faltantes que hay que tratar con cuidado.
+
+A lo largo del laboratorio vamos a ir avanzando paso a paso:
+
+1. Vamos a **explorar** la base tal como llega, sin modificarla.
+2. Vamos a **revisar los datos faltantes** (NA).
+3. Vamos a **quedarnos solo con las columnas que nos interesan** y les
+   pondremos nombres fáciles de entender.
+4. Vamos a **traducir los códigos numéricos** a etiquetas legibles
+   (por ejemplo, `1` → "Hombre", `2` → "Mujer").
+5. Vamos a **calcular indicadores del mercado laboral**: quiénes son
+   económicamente activos, quiénes están ocupados y quiénes desocupados
+   (esto último solo para calcular la tasa de desocupación; en este
+   laboratorio nos concentramos en la **población ocupada**).
+6. Vamos a calcular **medidas de tendencia central y de dispersión**
+   (media, mediana, moda, desviación estándar, varianza, rango) para la edad
+   y el ingreso **de la población ocupada**.
+7. Vamos a **graficar** la distribución de estas variables con histogramas.
+8. Vamos a estudiar la **relación entre variables** con una matriz de
+   correlación.
+9. Al final, vamos a aprender una lección importante: la ENOE es una
+   **encuesta por muestreo**, así que cada persona de la base representa a
+   varias personas en la población real (esto se guarda en la columna
+   `fac_tri`, el "factor de expansión"). Primero haremos todo el análisis
+   **sin usar ese factor** (más fácil de entender), y al final compararemos
+   qué cambia si lo usamos. Esta comparación es la lección más importante del
+   laboratorio.
+
+**Nota para quienes toman el curso:** en este laboratorio todavía no usamos
+funciones propias (`function() {...}`). Nos vamos a concentrar en la
+**población ocupada** para el análisis de edad, ingreso y correlaciones; el
+grupo de **desocupados** solo lo usamos para calcular la tasa de
+desocupación, uno de los tres indicadores clásicos del mercado laboral.
+
+---
+
+## 0. Preparación del entorno
+
+Antes de trabajar necesitamos cargar los paquetes que usaremos. Cada uno
+tiene un propósito distinto:
+
+- `dplyr`: para filtrar, seleccionar y transformar datos (`filter()`,
+  `select()`, `mutate()`, `summarise()`).
+- `ggplot2`: para hacer gráficas.
+- `scales`: para dar formato a los números de los ejes (comas, porcentajes).
+- `openxlsx`: para leer archivos de Excel (`.xlsx`).
+- `Hmisc`: para calcular medias y cuantiles **ponderados** (los usaremos al
+  final).
+- `corrplot`: para graficar la matriz de correlación.
+
+```{r librerias}
+# Si no tienes instalado algún paquete, quita el "#" de la siguiente línea
+# y ejecútala una sola vez:
+# install.packages(c("dplyr", "ggplot2", "scales", "openxlsx", "Hmisc", "corrplot"))
+
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(openxlsx)
+library(Hmisc)
+library(corrplot)
+
+# Definimos el directorio de trabajo: aquí es donde R va a buscar el archivo
+# de Excel y donde va a guardar lo que le pidamos guardar.
+# NOTA: dentro de un archivo .Rmd, setwd() solo aplica a ese "chunk".
+# Es más seguro colocar el .Rmd, el .xlsx y la carpeta "salidas" en la
+# misma carpeta, y no usar setwd() en absoluto (ver nota abajo).
+setwd("~/Cursos-R/Ejercicios/Ejercicio-1")
+```
+
+> **Nota importante sobre `setwd()` en R Markdown:** cuando usas `Knit` para
+> generar el HTML, R Markdown normalmente usa como directorio de trabajo la
+> carpeta donde está guardado el propio archivo `.Rmd`, sin importar lo que
+> pongas en `setwd()`. Si tu archivo de Excel no aparece o marca error de
+> "no se encuentra el archivo", la solución más simple es:
+> 1. Guardar el `.Rmd` en la misma carpeta que `enoe_2025_4t_sample_50k.xlsx`.
+> 2. Quitar o comentar la línea `setwd(...)`.
+> 3. Leer el archivo solo con su nombre, por ejemplo:
+>    `read.xlsx("enoe_2025_4t_sample_50k.xlsx", ...)`.
+
+---
+
+## 1. Lectura de la base de datos
+
+Leemos el archivo de Excel una sola vez y lo guardamos en un objeto llamado
+`enoe`. Le decimos a R que trate las celdas vacías, con un espacio, o con el
+texto `"NA"` como valores faltantes.
+
+```{r leer-datos}
+enoe <- read.xlsx(
+  "enoe_2025_4t_sample_50k.xlsx",
+  na.strings = c("", " ", "NA")
+)
+```
+
+Con `View()` normalmente abrimos una ventana para inspeccionar la base como
+si fuera una hoja de cálculo. **Esta función no debe usarse dentro de un
+chunk que se va a convertir a HTML** porque abre una ventana interactiva de
+RStudio y detiene (o rompe) el proceso de generación del documento. Para
+explorar la base de forma interactiva, ejecuta `View(enoe)` directamente en
+la consola de RStudio, no dentro del `.Rmd`.
+
+```{r vista-previa}
+# En el documento HTML usamos head() en su lugar, que sí se puede imprimir.
+head(enoe)
+```
+
+---
+
+## 2. Exploración inicial de la base
+
+Antes de hacer cualquier cálculo, siempre conviene mirar la estructura de los
+datos: cuántas filas y columnas tiene, y qué tipo de dato es cada columna.
+
+```{r explorar}
+# str() muestra el tipo de cada columna (numérica, texto, etc.) y algunos
+# valores de ejemplo.
+str(enoe)
+
+# dim() nos da el número de filas y columnas.
+dim(enoe)
+
+# names() y colnames() hacen lo mismo: nos muestran el nombre de cada columna.
+names(enoe)
+colnames(enoe)
+```
+
+---
+
+## 3. Revisión de valores faltantes (NA)
+
+Una base tan grande casi siempre tiene columnas con datos faltantes. Vamos a
+contar cuántos NA tiene cada columna y a graficar las que más tienen.
+
+```{r na-conteo}
+# colSums(is.na(enoe)) cuenta, para cada columna, cuántas celdas son NA.
+na_counts <- colSums(is.na(enoe))
+na_counts
+
+# Guardamos esos conteos en una tabla (data.frame) para poder ordenarla
+# y graficarla más fácilmente.
+total_filas <- nrow(enoe)
+
+na_resumen <- data.frame(
+  columna = names(na_counts),
+  na_count = na_counts,
+  na_percent = round((na_counts / total_filas) * 100, 2)
+) %>%
+  filter(na_count > 0) %>%
+  arrange(desc(na_count))
+
+na_resumen
+```
+
+Ahora graficamos las columnas con más valores faltantes:
+
+```{r na-grafica}
+ggplot(na_resumen, aes(x = reorder(columna, -na_count), y = na_count)) +
+  geom_bar(stat = "identity", fill = "forestgreen") +
+  labs(title = "Datos faltantes por columna",
+       x = "Columnas",
+       y = "Número de NA") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+---
+
+## 4. Selección de las variables de interés
+
+La base tiene más de 100 columnas, pero la mayoría son claves técnicas del
+diseño muestral que no vamos a usar en este laboratorio. Nos quedamos solo
+con las variables relevantes para el mercado laboral, y les damos nombres
+más fáciles de recordar con `select()`:
+
+```{r seleccion-variables}
+mercado_laboral <- enoe %>%
+  select(
+    entidad     = cve_ent,   # entidad federativa (01 a 32)
+    sexo        = sex,       # 1 = Hombre, 2 = Mujer
+    edad        = eda,       # edad en años cumplidos
+    escolaridad = anios_esc, # años de escolaridad aprobados
+    niv_ins     = niv_ins,   # nivel de instrucción (1 a 5)
+    clase1      = clase1,    # 1 = Población Económicamente Activa (PEA)
+                              # 2 = Población No Económicamente Activa (PNEA)
+    clase2      = clase2,    # dentro de la PEA: 1 = Ocupada, 2 = Desocupada
+    pos_ocu     = pos_ocu,   # tipo de empleo / posición en la ocupación
+    rama        = rama,      # sector de actividad económica (7 categorías)
+    ing7c       = ing7c,     # nivel de ingreso en 7 categorías
+    ingocup     = ingocup,   # ingreso mensual en pesos (población ocupada)
+    ing_x_hrs   = ing_x_hrs, # ingreso por hora trabajada
+    horas       = hrsocup,   # horas trabajadas a la semana
+    ponderador  = fac_tri    # factor de expansión trimestral
+  )
+
+# Revisamos el nuevo data frame: debería tener las mismas filas que "enoe"
+# pero muchas menos columnas.
+dim(mercado_laboral)
+str(mercado_laboral)
+```
+
+---
+
+## 5. Limpieza y recodificación de variables categóricas
+
+En la ENOE, el código `0` casi siempre significa "no aplica" (por ejemplo,
+`pos_ocu = 0` para alguien que no está ocupado). Si no lo convertimos en NA,
+R lo va a tratar como un número válido y nuestras estadísticas van a salir
+mal. Por eso, **primero** convertimos los ceros en NA con `na_if()`, y
+**después** convertimos la columna en un factor con etiquetas legibles.
+
+```{r recodificacion}
+mercado_laboral <- mercado_laboral %>%
+  mutate(
+    # ---- Sexo ----
+    sexo = factor(sexo, levels = c(1, 2), labels = c("Hombre", "Mujer")),
+
+    # ---- Población Económicamente Activa / No Activa ----
+    clase1 = factor(clase1, levels = c(1, 2),
+                     labels = c("PEA", "PNEA")),
+
+    # ---- Condición de ocupación (solo tiene sentido dentro de la PEA) ----
+    clase2 = factor(clase2, levels = c(1, 2, 3, 4),
+                     labels = c("Ocupada", "Desocupada",
+                                "Disponible", "No disponible")),
+
+    # ---- Tipo de empleo / posición en la ocupación ----
+    pos_ocu = na_if(pos_ocu, 0),
+    pos_ocu = factor(pos_ocu, levels = c(1, 2, 3, 4, 5),
+                      labels = c("Subordinado(a) y remunerado(a)",
+                                 "Empleador(a)",
+                                 "Trabajador(a) por cuenta propia",
+                                 "Trabajador(a) sin pago",
+                                 "No especificado")),
+
+    # ---- Nivel de instrucción ----
+    niv_ins = na_if(niv_ins, 0),
+    niv_ins = factor(niv_ins, levels = c(1, 2, 3, 4, 5),
+                      labels = c("Primaria incompleta",
+                                 "Primaria completa",
+                                 "Secundaria completa",
+                                 "Medio superior y superior",
+                                 "No especificado")),
+
+    # ---- Sector de actividad económica (rama) ----
+    rama = na_if(rama, 0),
+    rama = factor(rama, levels = 1:7,
+                   labels = c("Agropecuario",
+                              "Industria extractiva y electricidad",
+                              "Industria manufacturera",
+                              "Construcción",
+                              "Comercio",
+                              "Restaurantes y alojamiento",
+                              "Otros servicios")),
+
+    # ---- Nivel de ingreso agrupado (7 categorías del INEGI) ----
+    ing7c = na_if(ing7c, 0),
+    ing7c = factor(ing7c, levels = 1:7,
+                    labels = c("Hasta 1 s.m.", "Más de 1 a 2 s.m.",
+                               "Más de 2 a 3 s.m.", "Más de 3 a 5 s.m.",
+                               "Más de 5 s.m.", "No recibe ingresos",
+                               "No especificado")),
+
+    # ---- Variables numéricas: el 0 también significa "no aplica" ----
+    ingocup   = na_if(ingocup, 0),
+    ing_x_hrs = na_if(ing_x_hrs, 0),
+    horas     = na_if(horas, 0)
+  )
+
+# Revisamos cómo quedaron las variables recodificadas.
+summary(mercado_laboral$sexo)
+summary(mercado_laboral$pos_ocu)
+summary(mercado_laboral$niv_ins)
+```
+
+---
+
+## 6. Población en edad de trabajar, PEA, ocupados y desocupados
+
+Ahora vamos a construir, paso a paso, los grupos de población que se usan
+para calcular los indicadores del mercado laboral. Cada grupo es un
+subconjunto del anterior:
+
+```{r grupos-poblacion}
+# Población en Edad de Trabajar (PET): en México, se considera a partir de
+# los 15 años.
+PET <- mercado_laboral %>%
+  filter(edad >= 15)
+
+# ¿Cuántas personas se quedaron fuera de la PET por ser menores de 15 años?
+cat("Personas totales en la base:", nrow(mercado_laboral), "\n")
+cat("Personas en la PET (15 años o más):", nrow(PET), "\n")
+cat("Personas menores de 15 años (fuera de la PET):",
+    nrow(mercado_laboral) - nrow(PET), "\n\n")
+
+# Población Económicamente Activa (PEA): dentro de la PET, quienes trabajan
+# o buscan trabajo.
+PEA <- PET %>%
+  filter(clase1 == "PEA")
+
+cat("Personas en la PEA:", nrow(PEA), "\n")
+cat("Personas en la PNEA (dentro de la PET):", nrow(PET) - nrow(PEA), "\n\n")
+
+# Ocupados y desocupados son subconjuntos de la PEA.
+ocupados <- PEA %>%
+  filter(clase2 == "Ocupada")
+
+desocupados <- PEA %>%
+  filter(clase2 == "Desocupada")
+
+cat("Personas ocupadas:", nrow(ocupados), "\n")
+cat("Personas desocupadas:", nrow(desocupados), "\n")
+```
+
+### Indicadores del mercado laboral (sin ponderar, por ahora)
+
+Con estos cuatro grupos ya podemos calcular los tres indicadores más
+conocidos del mercado laboral. Por ahora los calculamos **sin usar el
+ponderador** (más adelante veremos qué cambia si lo usamos):
+
+```{r indicadores-sin-ponderar}
+# Tasa de participación: qué proporción de la PET participa en el mercado
+# laboral (trabajando o buscando trabajo).
+tasa_participacion <- nrow(PEA) / nrow(PET) * 100
+cat("Tasa de participación (sin ponderar):", round(tasa_participacion, 2), "%\n")
+
+# Tasa de desocupación: qué proporción de la PEA no tiene trabajo pero lo
+# busca.
+tasa_desocupacion <- nrow(desocupados) / nrow(PEA) * 100
+cat("Tasa de desocupación (sin ponderar):", round(tasa_desocupacion, 2), "%\n")
+
+# Tasa de ocupación: qué proporción de la PET tiene trabajo.
+tasa_ocupacion <- nrow(ocupados) / nrow(PET) * 100
+cat("Tasa de ocupación (sin ponderar):", round(tasa_ocupacion, 2), "%\n")
+```
+
+---
+
+## 7. Estadística descriptiva de la edad: población ocupada
+
+Vamos a calcular las medidas de tendencia central (media, mediana, moda) y
+de dispersión (desviación estándar, varianza, rango) para la edad de las
+personas ocupadas.
+
+```{r edad-ocupados-estadisticas}
+# ---- Media ----
+media_edad_ocupados <- mean(ocupados$edad, na.rm = TRUE)
+media_edad_ocupados
+
+# ---- Mediana ----
+mediana_edad_ocupados <- median(ocupados$edad, na.rm = TRUE)
+mediana_edad_ocupados
+
+# ---- Desviación estándar ----
+sd_edad_ocupados <- sd(ocupados$edad, na.rm = TRUE)
+sd_edad_ocupados
+
+# ---- Varianza ----
+var_edad_ocupados <- var(ocupados$edad, na.rm = TRUE)
+var_edad_ocupados
+
+# ---- Rango (valor mínimo y máximo) ----
+rango_edad_ocupados <- range(ocupados$edad, na.rm = TRUE)
+rango_edad_ocupados
+```
+
+R base no trae una función para calcular la **moda** (el valor más
+frecuente), así que la calculamos "a mano" con `table()`, que cuenta cuántas
+veces aparece cada edad:
+
+```{r edad-ocupados-moda}
+# table() cuenta cuántas veces aparece cada valor de edad.
+tabla_edad_ocupados <- table(ocupados$edad)
+
+# El valor máximo de esa tabla es la frecuencia más alta.
+frecuencia_maxima_ocupados <- max(tabla_edad_ocupados)
+
+# Buscamos qué edad(es) tienen esa frecuencia máxima: esa es la moda.
+moda_edad_ocupados <- names(tabla_edad_ocupados)[tabla_edad_ocupados == frecuencia_maxima_ocupados]
+moda_edad_ocupados
+```
+
+Imprimimos un resumen completo:
+
+```{r edad-ocupados-resumen}
+cat("EDAD de la población ocupada\n")
+cat(" Media          :", round(media_edad_ocupados, 2), "\n")
+cat(" Mediana        :", mediana_edad_ocupados, "\n")
+cat(" Desv. estándar :", round(sd_edad_ocupados, 2), "\n")
+cat(" Varianza       :", round(var_edad_ocupados, 2), "\n")
+cat(" Rango          :", rango_edad_ocupados[1], "a", rango_edad_ocupados[2], "\n")
+cat(" Moda           :", moda_edad_ocupados, "\n\n")
+```
+
+Y graficamos la distribución con un histograma, marcando la media y la
+mediana con líneas punteadas:
+
+```{r edad-ocupados-histograma}
+label_media_ocupados   <- paste0("Media: ", round(media_edad_ocupados, 1), " años")
+label_mediana_ocupados <- paste0("Mediana: ", round(mediana_edad_ocupados, 1), " años")
+
+ggplot(ocupados, aes(x = edad)) +
+  geom_histogram(binwidth = 5, fill = "navy", color = "white") +
+  geom_freqpoly(binwidth = 5, color = "#00C5CD", linewidth = 1) +
+  geom_vline(aes(xintercept = media_edad_ocupados, color = label_media_ocupados),
+             linetype = "dashed", linewidth = 1) +
+  geom_vline(aes(xintercept = mediana_edad_ocupados, color = label_mediana_ocupados),
+             linetype = "dashed", linewidth = 1) +
+  scale_color_manual(name = "", values = setNames(c("red", "yellow"),
+                                                    c(label_media_ocupados, label_mediana_ocupados))) +
+  scale_y_continuous(labels = comma, breaks = pretty_breaks()) +
+  labs(title = "Distribución de edad de la población ocupada en México",
+       subtitle = "Cuarto Trimestre de 2025",
+       x = "Edad (años)", y = "Frecuencia (número de personas)") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "bottom")
+```
+
+---
+
+## 8. El ingreso: nuestra primera estadística ponderada
+
+Hasta ahora hemos trabajado sin usar la columna `ponderador` (`fac_tri`).
+Para el ingreso vamos a introducir, por primera vez, el concepto de
+**media y mediana ponderadas**: en vez de que cada persona cuente como "1",
+cada persona cuenta como el número de personas que representa en la
+población real.
+
+```{r ingreso-ponderado}
+# weighted.mean() calcula la media dando más peso a las personas que
+# representan a más gente en la población.
+media_ingreso <- weighted.mean(ocupados$ingocup, ocupados$ponderador, na.rm = TRUE)
+media_ingreso
+
+# wtd.quantile(), del paquete Hmisc, calcula cuantiles (como la mediana)
+# tomando en cuenta el ponderador.
+mediana_ingreso <- wtd.quantile(ocupados$ingocup, ocupados$ponderador, probs = 0.5, na.rm = TRUE)
+mediana_ingreso
+```
+
+Graficamos la distribución del ingreso (usando `weight = ponderador` dentro
+del histograma, para que la altura de las barras también refleje a cuánta
+gente representa cada persona encuestada):
+
+```{r ingreso-histograma}
+label_media_ingreso   <- paste0("Media: $", comma(round(media_ingreso, 0)))
+label_mediana_ingreso <- paste0("Mediana: $", comma(round(mediana_ingreso, 0)))
+
+ggplot(ocupados %>% filter(ingocup > 0), aes(x = ingocup, weight = ponderador)) +
+  geom_histogram(binwidth = 2000, fill = "yellow", color = "white") +
+  geom_freqpoly(binwidth = 2000, color = "gold", linewidth = 1) +
+  geom_vline(aes(xintercept = media_ingreso, color = label_media_ingreso),
+             linetype = "dashed", linewidth = 1) +
+  geom_vline(aes(xintercept = mediana_ingreso, color = label_mediana_ingreso),
+             linetype = "dashed", linewidth = 1) +
+  scale_color_manual(name = "", values = setNames(c("tomato", "tomato3"),
+                                                    c(label_media_ingreso, label_mediana_ingreso))) +
+  coord_cartesian(xlim = c(0, wtd.quantile(ocupados$ingocup, ocupados$ponderador, 0.99, na.rm = TRUE))) +
+  scale_x_continuous(labels = comma, breaks = pretty_breaks(n = 10)) +
+  scale_y_continuous(labels = comma) +
+  labs(title = "Distribución del ingreso mensual de la población ocupada en México",
+       subtitle = "Cuarto Trimestre de 2025",
+       x = "Ingreso mensual (pesos)",
+       y = "Frecuencia (ponderada)") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "bottom")
+```
+
+---
+
+## 9. Deciles de ingreso
+
+Un decil divide a la población en 10 grupos iguales, del 10% que menos gana
+(decil 1) al 10% que más gana (decil 10). Usamos `wtd.quantile()` para
+encontrar los puntos de corte tomando en cuenta el ponderador:
+
+```{r deciles-calculo}
+# 1. Calculamos los puntos de corte de cada decil (0%, 10%, 20%, ..., 100%).
+cortes_ingreso <- wtd.quantile(
+  ocupados$ingocup,
+  weights = ocupados$ponderador,
+  probs = seq(0, 1, by = 0.1),
+  na.rm = TRUE
+)
+cortes_ingreso
+
+# 2. Clasificamos a cada persona en su decil correspondiente usando cut().
+ocupados <- ocupados %>%
+  mutate(decil_ingreso = cut(
+    ingocup,
+    breaks = cortes_ingreso,
+    labels = 1:10,
+    include.lowest = TRUE
+  ))
+
+# 3. Calculamos, para cada decil, cuánta gente representa y cuál es su
+# ingreso promedio.
+resumen_deciles <- ocupados %>%
+  filter(!is.na(decil_ingreso)) %>%
+  group_by(decil_ingreso) %>%
+  summarise(
+    poblacion_ponderada = sum(ponderador, na.rm = TRUE),
+    ingreso_promedio_ponderado = weighted.mean(ingocup, ponderador, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(pct_poblacion = poblacion_ponderada / sum(poblacion_ponderada) * 100)
+
+resumen_deciles
+```
+
+Graficamos el ingreso promedio de cada decil:
+
+```{r deciles-grafica-ingreso}
+ggplot(resumen_deciles, aes(x = decil_ingreso, y = ingreso_promedio_ponderado)) +
+  geom_col(fill = "#FFB90F") +
+  geom_text(aes(label = comma(round(ingreso_promedio_ponderado, 0))),
+            vjust = -0.5, size = 3.2) +
+  scale_y_continuous(labels = comma, expand = expansion(mult = c(0, 0.1))) +
+  labs(title = "Ingreso mensual promedio por decil (ponderado)",
+       subtitle = "Cuarto Trimestre de 2025",
+       x = "Decil de ingreso",
+       y = "Ingreso mensual promedio (pesos)") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        plot.subtitle = element_text(hjust = 0.5))
+```
+
+Y qué porcentaje del ingreso total se lleva cada decil (esto nos ayuda a ver
+qué tan desigual es la distribución del ingreso):
+
+```{r deciles-grafica-participacion}
+participacion_decil <- ocupados %>%
+  filter(!is.na(decil_ingreso)) %>%
+  group_by(decil_ingreso) %>%
+  summarise(
+    ingreso_total_decil = sum(ingocup * ponderador, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(pct_ingreso_total = ingreso_total_decil / sum(ingreso_total_decil) * 100)
+
+participacion_decil
+
+ggplot(participacion_decil, aes(x = decil_ingreso, y = pct_ingreso_total)) +
+  geom_col(fill = "darkred") +
+  geom_text(aes(label = paste0(round(pct_ingreso_total, 1), "%")),
+            vjust = -0.5, size = 3.2) +
+  scale_y_continuous(labels = function(x) paste0(x, "%"),
+                      expand = expansion(mult = c(0, 0.1))) +
+  labs(title = "Participación de cada decil en el ingreso total",
+       subtitle = "Población ocupada, Cuarto Trimestre de 2025",
+       x = "Decil de ingreso",
+       y = "% del ingreso total") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        plot.subtitle = element_text(hjust = 0.5))
+```
+
+---
+
+## 10. Relación entre variables: correlación
+
+Hasta ahora hemos visto cada variable por separado. Ahora vamos a ver si
+existe relación entre varias variables numéricas al mismo tiempo: edad,
+escolaridad, ingreso, ingreso por hora y horas trabajadas.
+
+```{r correlacion-matriz}
+# Nos quedamos solo con las columnas numéricas que nos interesan, y
+# eliminamos las filas que tengan algún NA en esas columnas (na.omit()),
+# porque cor() no puede trabajar con NA.
+variables_numericas <- ocupados %>%
+  select(edad, escolaridad, ingocup, ing_x_hrs, horas) %>%
+  na.omit()
+
+# cor() calcula el coeficiente de correlación entre cada par de columnas.
+# Un valor cercano a 1 significa relación positiva fuerte; cercano a -1,
+# relación negativa fuerte; cercano a 0, poca relación lineal.
+matriz_correlacion <- cor(variables_numericas)
+round(matriz_correlacion, 2)
+```
+
+Y la graficamos con un correlograma:
+
+```{r correlacion-grafica}
+corrplot(matriz_correlacion, method = "color", type = "upper",
+         addCoef.col = "black", tl.col = "black", tl.srt = 45,
+         title = "Correlación entre variables numéricas (población ocupada)",
+         mar = c(0, 0, 2, 0))
+```
+
+---
+
+## 11. La lección final: ¿qué cambia si ponderamos?
+
+Como mencionamos al inicio, la ENOE es una encuesta por muestreo: cada
+persona representa a `ponderador` personas en la población real. Vamos a
+recalcular los tres indicadores del mercado laboral, esta vez usando el
+ponderador, y a comparar el resultado con lo que obtuvimos sin ponderar en
+la sección 6.
+
+Nota: aunque en este laboratorio ya no analizamos a fondo a la población
+desocupada (edad, distribución, etc.), sí seguimos necesitando el grupo
+`desocupados` para poder calcular la **tasa de desocupación**, que es uno
+de los tres indicadores del mercado laboral.
+
+```{r indicadores-ponderados}
+# Tasa de participación ponderada: sumamos el ponderador de la PEA y lo
+# dividimos entre la suma del ponderador de la PET.
+tasa_participacion_ponderada <- sum(PEA$ponderador, na.rm = TRUE) /
+  sum(PET$ponderador, na.rm = TRUE) * 100
+
+# Tasa de desocupación ponderada.
+tasa_desocupacion_ponderada <- sum(desocupados$ponderador, na.rm = TRUE) /
+  sum(PEA$ponderador, na.rm = TRUE) * 100
+
+# Tasa de ocupación ponderada.
+tasa_ocupacion_ponderada <- sum(ocupados$ponderador, na.rm = TRUE) /
+  sum(PET$ponderador, na.rm = TRUE) * 100
+
+# Armamos una tabla comparativa.
+comparacion_indicadores <- data.frame(
+  indicador = c("Tasa de participación", "Tasa de desocupación", "Tasa de ocupación"),
+  sin_ponderar = round(c(tasa_participacion, tasa_desocupacion, tasa_ocupacion), 2),
+  ponderado = round(c(tasa_participacion_ponderada, tasa_desocupacion_ponderada,
+                       tasa_ocupacion_ponderada), 2)
+)
+
+comparacion_indicadores
+```
+
+**Pregunta para reflexionar:** ¿los indicadores cambiaron mucho o poco al
+ponderar? ¿Por qué crees que pasa esto? Esta es la razón por la que, en un
+análisis real del mercado laboral, casi nunca se debe ignorar el
+ponderador.
+
+---
+
+## 12. (Opcional) Guardar nuestros resultados
+
+Si quieres guardar las tablas que construiste para usarlas después (por
+ejemplo, en un reporte), puedes exportarlas a `.csv`:
+
+```{r guardar-resultados}
+dir.create("salidas", showWarnings = FALSE)
+
+write.csv(comparacion_indicadores, "salidas/comparacion_indicadores.csv", row.names = FALSE)
+write.csv(resumen_deciles, "salidas/resumen_deciles_ingreso.csv", row.names = FALSE)
+```
