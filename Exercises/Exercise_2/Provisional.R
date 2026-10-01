@@ -23,16 +23,17 @@
 
 # Ejecuta este bloque UNA SOLA VEZ en tu computadora.
 # Después puedes comentarlo con # para no repetir la instalación.
+
 # install.packages(c(
 #  "tidyr", "readr", "ggplot2", "dplyr", "scales",
 #  "survey", "srvyr", "foreign", "reldist", "ggthemes",
-#  "purrr", "bayesplot", "tidybayes", "forcats"
-# ))
+#  "purrr", "bayesplot", "tidybayes", "forcats"))
 
 # Instalación de RStan (motor bayesiano):
 # Consulta las instrucciones oficiales en: https://mc-stan.org/install/
 # remotes::install_github("stan-dev/rstan", ref = "develop", subdir = "rstan/rstan")
 # Una vez instalado RStan, instala rstanarm:
+
 # install.packages("rstanarm")
 
 
@@ -68,6 +69,8 @@ setwd("~/Cursos-R/Laboratorios/Laboratorio-3")
 # Cada fila representa un hogar en México.
 conc <- read_csv("concentradohogar.csv")
 
+colnames(conc)
+
 # conocer la estructura de la base
 str(conc)
 
@@ -92,6 +95,8 @@ names(conc)
 #   nest    = TRUE     → Indica que las UPM están anidadas dentro de los estratos
 str(conc)
 
+class(diseno)
+
 diseno <- conc %>%
   as_survey_design(
     ids     = upm,
@@ -107,7 +112,7 @@ summary(diseno)
 
 
 # # 5 Ingreso corriente: media ponderada vs. no ponderada
-
+names(conc)
 
 # ## 5.1 Comparación de estimaciones
 
@@ -117,6 +122,13 @@ ingr_mens <- media_simple/3
 ingr_mens
 ingr_mens_per <- ingr_mens/2
 ingr_mens_per
+
+ingr_mediano <- median(conc$ing_cor, na.rm = TRUE)
+
+ingr_mediano_mensual <- ingr_mediano/3
+
+ingr_mediano_mensual_per <- ingr_mediano_mensual/2
+
 
 #Factor de expansion
 conc$factor
@@ -132,6 +144,19 @@ ingr_mens_factor <-media_pond/3
 ingr_mens_factor
 ingr_mens_per_factor <- ingr_mens_factor/2
 ingr_mens_per_factor
+
+# CORRECTO: Media ponderada usando el diseño muestral
+mediana_pond <- diseno %>%
+  summarise(
+    mediana     = survey_median(ing_cor, na.rm = TRUE),
+    total_hog = survey_total(1)   # Número total de hogares que representa la encuesta
+  )
+
+ingr_mens_factor <-mediana_pond/3
+ingr_mens_factor
+ingr_mens_per_factor <- ingr_mens_factor/2
+ingr_mens_per_factor
+
 cat("=== Comparación de medias del ingreso corriente trimestral ===\n")
 
 cat("Media sin ponderar: $", round(media_simple, 0), "\n")
@@ -234,7 +259,10 @@ unique(conc$acum_peso)
 
 # Reconstruimos el diseño con la nueva variable de decil
 diseno2 <- conc %>%
-  as_survey_design(ids = upm, strata = est_dis, weights = factor, nest = TRUE)
+  as_survey_design(ids = upm, 
+                   strata = est_dis, 
+                   weights = factor, 
+                   nest = TRUE)
 
 # Ingreso promedio mensual por decil
 ing_decil <- diseno2 %>%
@@ -330,3 +358,724 @@ participacion_ingreso_plot
 
 gini_val <- with(conc, gini(ing_cor, w = factor))
 cat("Coeficiente de Gini (ENIGH 2024):", round(gini_val, 4), "\n")
+
+
+# # 7 Pobreza por ingresos
+
+
+# ## 7.1 Construcción del indicador de pobreza
+# Paso 1: Calcular el ingreso mensual per cápita
+conc <- conc %>%
+  mutate(
+    ing_mensual    = ing_cor / 3,
+    ing_pc_mensual = ing_mensual / tot_integ  # per cápita = total / miembros
+  )
+
+# Paso 2: Clasificar zona urbana vs. rural
+# tam_loc == 4 indica localidades rurales (menos de 2,500 habitantes)
+conc <- conc %>%
+  mutate(zona = if_else(tam_loc == 4, "Rural", "Urbano"))
+
+# Paso 3: Definir líneas de bienestar (valores ilustrativos en MXN/mes/persona)
+# Consulta las cifras oficiales actualizadas en: https://www.coneval.org.mx
+lb_rural  <- 4200
+lb_urbano <- 5800
+
+# Paso 4: Clasificar hogares como pobres (1) o no pobres (0)
+conc <- conc %>%
+  mutate(
+    linea_lb     = if_else(zona == "Rural", lb_rural, lb_urbano),
+    pobre_ingreso = as.numeric(ing_pc_mensual < linea_lb)
+  )
+
+# Recreamos el diseño muestral con las nuevas variables
+diseno3 <- conc %>%
+  as_survey_design(ids = upm, 
+                   strata = est_dis, 
+                   weights = factor, 
+                   nest = TRUE)
+
+# ## 7.2 Tasa nacional de pobreza
+tasa_pobreza <- diseno3 %>%
+  summarise(
+    tasa_pob     = survey_mean(pobre_ingreso, na.rm = TRUE, vartype = "ci"),
+    total_pobres = survey_total(pobre_ingreso, na.rm = TRUE)
+  )
+
+cat("\n=== Pobreza por ingresos (nacional) ===\n")
+
+cat("Tasa de pobreza:", round(tasa_pobreza$tasa_pob * 100, 1), "%\n")
+
+cat("Total de hogares en pobreza:",
+    format(round(tasa_pobreza$total_pobres, 0), big.mark = ","), "\n")
+
+
+# # 8 Pobreza por entidad federativa
+
+
+# ## 8.1 Creación de identificador de entidad y catálogo de nombres
+
+conc$ubica_geo
+
+
+# Los dos primeros dígitos de ubica_geo identifican la entidad federativa
+conc <- conc %>%
+  mutate(entidad = substr(ubica_geo, 1, 2))
+
+# Catálogo de nombres de las 32 entidades federativas
+cat_entidades <- tibble(
+  entidad = sprintf("%02d", 1:32),
+  nombre_entidad = c(
+    "Aguascalientes", "Baja California", "Baja California Sur",
+    "Campeche", "Coahuila", "Colima", "Chiapas", "Chihuahua",
+    "Ciudad de México", "Durango", "Guanajuato", "Guerrero",
+    "Hidalgo", "Jalisco", "Estado de México", "Michoacán",
+    "Morelos", "Nayarit", "Nuevo León", "Oaxaca", "Puebla",
+    "Querétaro", "Quintana Roo", "San Luis Potosí", "Sinaloa",
+    "Sonora", "Tabasco", "Tamaulipas", "Tlaxcala", "Veracruz",
+    "Yucatán", "Zacatecas"
+  )
+)
+
+# Reconstruimos el diseño con la variable de entidad
+diseno3 <- conc %>%
+  as_survey_design(ids = upm, 
+                   strata = est_dis, 
+                   weights = factor, 
+                   nest = TRUE)
+
+
+# ## 8.2 Tasa de pobreza por estado
+
+pob_entidad <- diseno3 %>%
+  group_by(entidad) %>%
+  summarise(tasa_pob = survey_mean(pobre_ingreso, na.rm = TRUE)) %>%
+  left_join(cat_entidades, by = "entidad") %>%
+  arrange(desc(tasa_pob))
+
+pobreza_ingreso_estado <- ggplot(
+  pob_entidad,
+  aes(x = reorder(nombre_entidad, tasa_pob), y = tasa_pob, fill = nombre_entidad)
+) +
+  geom_col(alpha = 0.8) +
+  geom_text(
+    aes(label = paste0(round(tasa_pob * 100, 0), "%")),
+    hjust = -0.1, size = 2.5
+  ) +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  scale_fill_viridis_d(option = "plasma", guide = "none") +
+  coord_flip() +
+  labs(
+    title   = "Tasa de pobreza por ingresos según entidad federativa",
+    x = "Entidad", y = "% hogares en pobreza",
+    caption = "Fuente: INEGI, ENIGH 2024."
+  ) +
+  theme_minimal()
+
+pobreza_ingreso_estado
+
+
+# ## 8.3 Pobreza por entidad y zona (urbano/rural)
+
+pob_entidad_zona <- diseno3 %>%
+  group_by(entidad, zona) %>%
+  summarise(tasa_pob = survey_mean(pobre_ingreso, na.rm = TRUE)) %>%
+  left_join(cat_entidades, by = "entidad") %>%
+  mutate(zona = factor(zona, levels = c("Urbano", "Rural")))
+
+# --- Gráfica zona urbana ---
+urban_data <- pob_entidad_zona %>% filter(zona == "Urbano")
+
+urban_poverty_plot <- ggplot(
+  urban_data,
+  aes(x = fct_reorder(nombre_entidad, tasa_pob), y = tasa_pob, fill = nombre_entidad)
+) +
+  geom_col(alpha = 0.9) +
+  geom_text(aes(label = paste0(round(tasa_pob * 100, 0), "%")), hjust = -0.1, size = 2.5) +
+  scale_y_continuous(
+    labels = percent_format(accuracy = 1),
+    limits = c(0, max(urban_data$tasa_pob) * 1.05)
+  ) +
+  scale_fill_viridis_d(option = "viridis", guide = "none") +
+  coord_flip() +
+  labs(title = "Pobreza por ingresos – Zona Urbana", x = NULL, y = "% hogares en pobreza") +
+  theme_minimal(base_size = 10) +
+  theme(axis.text.y = element_text(size = 7))
+
+urban_poverty_plot
+
+# --- Gráfica zona rural ---
+rural_data <- pob_entidad_zona %>% filter(zona == "Rural")
+
+rural_poverty_plot <- ggplot(
+  rural_data,
+  aes(x = fct_reorder(nombre_entidad, tasa_pob), y = tasa_pob, fill = nombre_entidad)
+) +
+  geom_col(alpha = 0.9) +
+  geom_text(aes(label = paste0(round(tasa_pob * 100, 0), "%")), hjust = -0.1, size = 2.5) +
+  scale_y_continuous(
+    labels = percent_format(accuracy = 1),
+    limits = c(0, max(rural_data$tasa_pob) * 1.05)
+  ) +
+  scale_fill_viridis_d(option = "viridis", guide = "none") +
+  coord_flip() +
+  labs(title = "Pobreza por ingresos – Zona Rural", x = NULL, y = "% hogares en pobreza") +
+  theme_minimal(base_size = 10) +
+  theme(axis.text.y = element_text(size = 7))
+
+rural_poverty_plot
+
+
+# # 9 Análisis del gasto de los hogares
+
+
+# ## 9.1 Construcción de variables de gasto
+
+# Convertimos todos los rubros de gasto de trimestral a mensual.
+# Dividir entre 3 porque la ENIGH captura el gasto del trimestre de referencia.
+conc <- conc %>%
+  mutate(
+    gasto_mensual  = gasto_mon / 3,
+    gasto_pc       = gasto_mensual / tot_integ,       # per cápita
+    g_alimentos    = (ali_dentro + ali_fuera) / 3,    # alimentos en casa + fuera
+    g_vivienda     = vivienda / 3,
+    g_transporte   = transporte / 3,
+    g_salud        = salud / 3,
+    g_educacion    = educacion / 3,
+    g_vestido      = vesti_calz / 3,
+    g_comunicacion = comunica / 3,
+    g_otros        = otros_gas / 3
+  )
+
+
+# ## 9.2 Deciles de gasto per cápita
+
+# Construimos deciles de gasto per cápita con el método acumulativo
+conc <- conc %>%
+  arrange(gasto_pc) %>%
+  mutate(
+    acum_peso_gasto  = cumsum(factor),
+    total_peso_gasto = sum(factor),
+    decil_gasto      = ceiling(acum_peso_gasto / total_peso_gasto * 10),
+    decil_gasto      = pmin(decil_gasto, 10)
+  )
+
+# Reconstruimos el diseño
+diseno3 <- conc %>%
+  as_survey_design(ids = upm, strata = est_dis, weights = factor, nest = TRUE)
+
+# Gasto e ingreso promedio mensual por decil de gasto
+gasto_decil <- diseno3 %>%
+  group_by(decil_gasto) %>%
+  summarise(
+    gasto_med   = survey_mean(gasto_mensual, na.rm = TRUE),
+    ingreso_med = survey_mean(ing_mensual, na.rm = TRUE)
+  ) %>%
+  mutate(decil_gasto = factor(decil_gasto))
+
+max_gasto <- max(gasto_decil$gasto_med, na.rm = TRUE)
+
+gasto_deciles_plot <- ggplot(
+  gasto_decil,
+  aes(x = factor(decil_gasto), y = gasto_med, fill = factor(decil_gasto))
+) +
+  geom_col(alpha = 0.85) +
+  geom_text(
+    aes(label = paste0("$", format(round(gasto_med, 0), big.mark = ","))),
+    vjust = -0.4, size = 3
+  ) +
+  scale_y_continuous(
+    labels = dollar_format(prefix = "$"),
+    limits = c(0, max_gasto * 1.15),
+    expand = expansion(mult = c(0, 0))
+  ) +
+  scale_fill_manual(
+    values = colorRampPalette(c("#deebf7", "#08306b"))(10),
+    guide  = "none"
+  ) +
+  labs(
+    title = "Gasto mensual promedio del hogar por decil de gasto per cápita",
+    x = "Decil de gasto per cápita", y = "Gasto mensual ($MXN)"
+  ) +
+  theme_minimal()
+
+gasto_deciles_plot
+
+
+# ## 9.3 Propensión marginal al consumo (PMC)
+
+apc_df <- data.frame(
+  decil            = 1:10,
+  gasto_med        = gasto_decil$gasto_med,
+  ing_prom_mensual = ing_decil$ing_prom_mensual,
+  apc              = gasto_decil$gasto_med / ing_decil$ing_prom_mensual
+)
+
+apc_plot <- ggplot(apc_df, aes(x = factor(decil), y = apc, fill = factor(decil))) +
+  geom_col(alpha = 0.85) +
+  geom_text(aes(label = paste0(round(apc * 100, 1), "%")), vjust = -0.3, size = 3.5) +
+  scale_y_continuous(
+    labels = percent_format(accuracy = 1),
+    limits = c(0, max(apc_df$apc) * 1.1)
+  ) +
+  scale_fill_manual(
+    values = colorRampPalette(c("#00441b", "#e5f5e0"))(10),
+    guide  = "none"
+  ) +
+  labs(
+    title    = "Propensión marginal al consumo por decil",
+    subtitle = "Gasto mensual del hogar / Ingreso mensual del hogar",
+    x = "Decil", y = "Proporción (gasto / ingreso)"
+  ) +
+  theme_minimal()
+
+apc_plot
+
+
+# ## 9.4 Composición del gasto por decil
+
+categorias <- c("g_alimentos", "g_vivienda", "g_transporte", "g_salud",
+                "g_educacion", "g_vestido", "g_comunicacion", "g_otros")
+
+# Gasto promedio por categoría y decil (ponderado)
+gasto_final <- diseno3 %>%
+  group_by(decil_gasto) %>%
+  summarise(
+    across(all_of(categorias), ~ survey_mean(.x, na.rm = TRUE), .names = "{.col}")
+  ) %>%
+  select(decil_gasto, all_of(categorias)) %>%
+  pivot_longer(-decil_gasto, names_to = "categoria", values_to = "gasto") %>%
+  mutate(
+    categoria = recode(
+      categoria,
+      g_alimentos    = "Alimentos",   g_vivienda    = "Vivienda",
+      g_transporte   = "Transporte",  g_salud       = "Salud",
+      g_educacion    = "Educación",   g_vestido     = "Vestido",
+      g_comunicacion = "Comunicación", g_otros      = "Otros"
+    )
+  ) %>%
+  group_by(decil_gasto, categoria) %>%
+  summarise(gasto = sum(gasto), .groups = "drop") %>%
+  group_by(decil_gasto) %>%
+  arrange(decil_gasto, desc(gasto)) %>%
+  mutate(
+    total_decil = sum(gasto),
+    pct         = gasto / total_decil,
+    pos         = cumsum(gasto) - (gasto / 2)
+  ) %>%
+  ungroup()
+
+descomposicion_gasto_decil <- ggplot(gasto_final, aes(x = factor(decil_gasto), y = gasto)) +
+  geom_col(
+    aes(fill = fct_reorder(categoria, gasto)),
+    position = "stack", alpha = 0.9, color = "white", linewidth = 0.1
+  ) +
+  geom_text(
+    aes(y = pos, label = ifelse(pct >= 0.05, paste0(round(pct * 100, 0), "%"), "")),
+    size = 3, color = "white", fontface = "bold"
+  ) +
+  geom_text(
+    data = distinct(gasto_final, decil_gasto, total_decil),
+    aes(x = factor(decil_gasto), y = total_decil,
+        label = paste0("$", format(round(total_decil, 0), big.mark = ","))),
+    inherit.aes = FALSE, vjust = -0.5, size = 3, color = "gray20"
+  ) +
+  scale_fill_brewer(palette = "Set2") +
+  scale_y_continuous(
+    breaks = seq(0, 30000, by = 3000),
+    labels = dollar_format(prefix = "$"),
+    expand = expansion(mult = c(0, 0.15))
+  ) +
+  labs(
+    title = "Composición del gasto mensual del hogar por decil",
+    x = "Decil de gasto per cápita", y = "Pesos MXN", fill = "Rubro"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+descomposicion_gasto_decil
+
+
+# # 10 Análisis exploratorio de predictores de pobreza
+
+
+# ## 10.1 Construcción de variables predictoras
+
+conc <- conc %>%
+  mutate(
+    # Variable binaria de zona rural
+    rural = as.numeric(zona == "Rural"),
+    
+    # Logaritmo del tamaño del hogar (reduce el efecto de valores extremos)
+    log_tam_hogar = log(tot_integ),
+    
+    # Educación del jefe/jefa de hogar normalizada a escala 0-1
+    edu_numeric = case_when(
+      educa_jefe %in% c("Sin instrucción", "Preescolar") ~ 0,
+      educa_jefe == "Primaria"      ~ 1,
+      educa_jefe == "Secundaria"    ~ 2,
+      educa_jefe == "Preparatoria"  ~ 3,
+      educa_jefe == "Profesional"   ~ 4,
+      educa_jefe == "Posgrado"      ~ 5,
+      TRUE ~ NA_real_
+    ),
+    edu_jefe = if_else(is.na(edu_numeric), 0.3, edu_numeric / 5),
+    
+    # Ratio: perceptores de ingreso / total de miembros del hogar
+    ratio_percep = if_else(tot_integ > 0, percep_ing / tot_integ, 0),
+    
+    entidad = substr(ubica_geo, 1, 2)
+  ) %>%
+  select(-edu_numeric)
+
+
+# ## 10.2 Pobreza por zona
+
+cat("\n=== Tasa de pobreza por zona ===\n")
+
+conc %>%
+  group_by(zona) %>%
+  summarise(
+    tasa_pobreza = weighted.mean(pobre_ingreso, factor, na.rm = TRUE),
+    n_hogares    = n()
+  ) %>%
+  print()
+
+
+# ## 10.3 Pobreza por nivel educativo del jefe/jefa de hogar
+
+# Clasificación en quintiles de educación para análisis comparativo
+conc <- conc %>%
+  mutate(quintil_edu = factor(ntile(edu_jefe, 5), labels = paste0("Q", 1:5)))
+
+cat("\nPobreza por quintil de educación del jefe/jefa:\n")
+
+conc %>%
+  group_by(quintil_edu) %>%
+  summarise(
+    tasa_pobreza = weighted.mean(pobre_ingreso, factor, na.rm = TRUE),
+    edu_promedio = weighted.mean(edu_jefe * 11, factor, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  print()
+
+
+# ## 10.4 Gráficas de predictores
+
+
+# ### 10.4.1 Educación y pobreza
+
+# Funciones auxiliares para aclarar/oscurecer colores base
+lighten <- function(color, factor = 0.6) {
+  rgb_vals <- col2rgb(color) / 255
+  rgb_vals <- rgb_vals + (1 - rgb_vals) * (1 - factor)
+  rgb(rgb_vals[1], rgb_vals[2], rgb_vals[3])
+}
+darken <- function(color, factor = 0.6) {
+  rgb_vals <- col2rgb(color) / 255
+  rgb_vals <- rgb_vals * factor
+  rgb(rgb_vals[1], rgb_vals[2], rgb_vals[3])
+}
+
+# Categorías de educación a partir de los códigos de la ENIGH
+conc <- conc %>%
+  mutate(
+    edu_cat = case_when(
+      educa_jefe == "01" ~ "Sin instrucción",
+      educa_jefe == "02" ~ "Preescolar",
+      educa_jefe == "03" ~ "Primaria",
+      educa_jefe == "04" ~ "Secundaria",
+      educa_jefe == "05" ~ "Preparatoria",
+      educa_jefe == "06" ~ "Profesional",
+      educa_jefe == "07" ~ "Posgrado",
+      educa_jefe %in% c("08", "09", "10", "11") ~ "Técnico / Normal",
+      TRUE ~ NA_character_
+    )
+  )
+
+edu_levels <- c("Sin instrucción", "Preescolar", "Primaria", "Secundaria",
+                "Preparatoria", "Técnico / Normal", "Profesional", "Posgrado")
+conc$edu_cat <- factor(conc$edu_cat, levels = edu_levels)
+
+conc <- conc %>%
+  mutate(pobreza_label = ifelse(pobre_ingreso == 1, "Pobre", "No pobre"))
+
+# Conteos ponderados por grupo educación × pobreza
+plot_data <- conc %>%
+  filter(!is.na(edu_cat), !is.na(pobreza_label), !is.na(factor)) %>%
+  group_by(edu_cat, pobreza_label) %>%
+  summarise(weighted_n = sum(factor), .groups = "drop")
+
+base_colors <- c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+                 "#8c564b", "#e377c2", "#7f7f7f")
+names(base_colors) <- edu_levels
+
+plot_data <- plot_data %>%
+  rowwise() %>%
+  mutate(
+    fill_color = ifelse(
+      pobreza_label == "No pobre",
+      lighten(base_colors[as.character(edu_cat)], 0.7),
+      darken(base_colors[as.character(edu_cat)], 0.7)
+    )
+  ) %>%
+  ungroup()
+
+plot_data <- plot_data %>%
+  mutate(combo = paste(edu_cat, pobreza_label, sep = ": "))
+combo_order <- c()
+for (lvl in edu_levels) {
+  combo_order <- c(combo_order,
+                   paste(lvl, "No pobre", sep = ": "),
+                   paste(lvl, "Pobre",    sep = ": "))
+}
+plot_data$combo <- factor(plot_data$combo, levels = combo_order)
+plot_data <- plot_data %>%
+  mutate(label = paste0(round(weighted_n / 1e6, 1), "M"))
+
+p_edu_correct <- ggplot(
+  plot_data,
+  aes(x = edu_cat, y = weighted_n, fill = combo, label = label)
+) +
+  geom_col(position = position_dodge(width = 0.9), alpha = 0.9) +
+  geom_text(
+    position = position_dodge(width = 0.9),
+    aes(y = weighted_n + 0.02 * max(weighted_n)),
+    vjust = 0, size = 3
+  ) +
+  scale_fill_manual(
+    values = setNames(plot_data$fill_color, plot_data$combo),
+    name   = "Condición"
+  ) +
+  scale_y_continuous(labels = label_number(scale = 1e-6, suffix = "M")) +
+  labs(
+    title = "Nivel educativo del jefe/jefa de hogar según condición de pobreza",
+    x = "Nivel educativo", y = "Número de hogares (millones)"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "right", axis.text.x = element_text(angle = 45, hjust = 1))
+
+p_edu_correct
+
+
+# ### 10.4.2 Perceptores de ingreso y pobreza
+
+p_percep <- ggplot(
+  conc %>%
+    filter(!is.na(ratio_percep)) %>%
+    mutate(condicion = factor(pobre_ingreso, labels = c("No pobre", "Pobre"))),
+  aes(x = condicion, y = ratio_percep, fill = condicion)
+) +
+  geom_violin(alpha = 0.6, trim = TRUE) +
+  geom_boxplot(width = 0.15, outlier.shape = NA, fill = "white", alpha = 0.8) +
+  scale_fill_manual(
+    values = c("No pobre" = "#2166ac", "Pobre" = "#b5450a"),
+    guide  = "none"
+  ) +
+  labs(
+    title    = "Ratio perceptores/miembros por condición de pobreza",
+    subtitle = "Los hogares pobres tienen menor diversificación de ingresos",
+    x = NULL, y = "Perceptores de ingreso / total de miembros",
+    caption  = "Fuente: INEGI, ENIGH 2024."
+  ) +
+  theme_minimal(base_size = 12)
+
+p_percep
+
+
+# ### 10.4.3 Tamaño del hogar y pobreza
+
+p_tam <- conc %>%
+  mutate(
+    tam_cat = cut(tot_integ,
+                  breaks = c(0, 2, 4, 6, Inf),
+                  labels = c("1-2", "3-4", "5-6", "7+"))
+  ) %>%
+  group_by(tam_cat) %>%
+  summarise(
+    tasa_pob  = weighted.mean(pobre_ingreso, factor, na.rm = TRUE),
+    n_hogares = n()
+  ) %>%
+  ggplot(aes(x = tam_cat, y = tasa_pob, fill = tam_cat)) +
+  geom_col(alpha = 0.85) +
+  geom_text(
+    aes(label = percent(tasa_pob, accuracy = 0.1)),
+    vjust = -0.4, size = 4
+  ) +
+  scale_y_continuous(
+    labels = percent_format(),
+    expand = expansion(mult = c(0, 0.12))
+  ) +
+  scale_fill_manual(
+    values = c("1-2" = "#deebf7", "3-4" = "#9ecae1",
+               "5-6" = "#3182bd", "7+"  = "#08306b"),
+    guide  = "none"
+  ) +
+  labs(
+    title    = "Tasa de pobreza según tamaño del hogar",
+    subtitle = "Los hogares numerosos tienen mayor riesgo de pobreza",
+    x = "Número de miembros", y = "Tasa de pobreza",
+    caption  = "Fuente: INEGI, ENIGH 2024."
+  ) +
+  theme_minimal(base_size = 12)
+
+p_tam
+
+
+# # 11 Introducción a la inferencia bayesiana aplicada a la pobreza
+
+
+# ## 11.1 ¿Qué es la inferencia bayesiana?
+
+
+# ## 11.2 Comparación de distribuciones posteriores con muestra pequeña
+
+set.seed(123)
+
+# Tomamos una submuestra pequeña de 30 hogares para que el prior tenga efecto visible
+tiny_sample <- conc %>% 
+  sample_n(30)
+
+n_pobres_tiny <- sum(tiny_sample$pobre_ingreso, na.rm = TRUE)
+n_total_tiny  <- nrow(tiny_sample)
+
+cat("Muestra pequeña: n =", n_total_tiny,
+    ", pobres =", n_pobres_tiny,
+    ", tasa =", round(n_pobres_tiny / n_total_tiny * 100, 1), "%\n")
+
+# Definimos cinco priors con diferentes supuestos iniciales
+priors <- list(
+  "Uniforme (Beta 1,1)"      = c(1, 1),   # sin información previa
+  "Débil (Beta 2,2)"         = c(2, 2),   # leve preferencia por 50%
+  "Fuerte 50% (Beta 50,50)"  = c(50, 50), # convicción fuerte de que θ ≈ 0.5
+  "Escéptico (Beta 5,15)"    = c(5, 15),  # cree que la tasa es baja (~25%)
+  "Optimista (Beta 15,5)"    = c(15, 5)   # cree que la tasa es alta (~75%)
+)
+
+theta_grid   <- seq(0, 1, length.out = 500)
+df_posteriors <- tibble()
+
+for (prior_name in names(priors)) {
+  a_prior <- priors[[prior_name]][1]
+  b_prior <- priors[[prior_name]][2]
+  
+  # Parámetros de la distribución posterior
+  a_post <- a_prior + n_pobres_tiny
+  b_post <- b_prior + (n_total_tiny - n_pobres_tiny)
+  
+  dens <- dbeta(theta_grid, a_post, b_post)
+  
+  df_posteriors <- bind_rows(df_posteriors,
+                             tibble(theta = theta_grid, densidad = dens, prior = prior_name))
+}
+
+# Ordenamos los factores para la leyenda
+df_posteriors$prior <- factor(df_posteriors$prior, levels = c(
+  "Uniforme (Beta 1,1)", "Débil (Beta 2,2)", "Escéptico (Beta 5,15)",
+  "Optimista (Beta 15,5)", "Fuerte 50% (Beta 50,50)"
+))
+
+colores_priors <- c(
+  "Uniforme (Beta 1,1)"     = "gray50",
+  "Débil (Beta 2,2)"        = "#1f77b4",
+  "Escéptico (Beta 5,15)"   = "#2ca02c",
+  "Optimista (Beta 15,5)"   = "#d62728",
+  "Fuerte 50% (Beta 50,50)" = "#9467bd"
+)
+
+p_alpha <- ggplot(df_posteriors, aes(x = theta, y = densidad, fill = prior)) +
+  geom_area(alpha = 0.4, position = "identity") +
+  scale_x_continuous(labels = percent_format(accuracy = 1), limits = c(0, 1)) +
+  scale_fill_manual(values = colores_priors) +
+  labs(
+    title    = paste("Distribuciones posteriores con muestra pequeña (n =", n_total_tiny, ")"),
+    subtitle = paste("Hogares pobres en la muestra:", n_pobres_tiny, "/", n_total_tiny,
+                     "(", round(n_pobres_tiny / n_total_tiny * 100, 1), "%)"),
+    x = "Tasa de pobreza (θ)", y = "Densidad posterior",
+    fill = "Prior"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "bottom")
+
+p_alpha
+
+
+# ## 11.3 Sensibilidad a la línea de bienestar
+
+set.seed(123)
+n_muestra <- 200
+submuestra <- conc %>% sample_n(n_muestra)
+
+lb_rural_base  <- 4200
+lb_urbano_base <- 5800
+
+# Ajustes del -15% al +15% de la línea de bienestar
+ajustes        <- c(-0.15, -0.10, -0.05, 0, 0.05, 0.10, 0.15)
+ajustes_labels <- paste0(ajustes * 100, "%")
+
+priors <- list(
+  "Uniforme (Beta 1,1)"     = c(1, 1),
+  "Débil (Beta 2,2)"        = c(2, 2),
+  "Escéptico (Beta 5,15)"   = c(5, 15),
+  "Optimista (Beta 15,5)"   = c(15, 5),
+  "Fuerte 50% (Beta 50,50)" = c(50, 50)
+)
+
+df_curvas <- tibble()
+
+for (prior_nombre in names(priors)) {
+  a_prior <- priors[[prior_nombre]][1]
+  b_prior <- priors[[prior_nombre]][2]
+  
+  for (z in c("Rural", "Urbano")) {
+    data_z    <- submuestra %>% filter(zona == z)
+    n_total_z <- nrow(data_z)
+    if (n_total_z == 0) next
+    
+    for (adj in ajustes) {
+      lb_base   <- ifelse(z == "Rural", lb_rural_base, lb_urbano_base)
+      lb_adj    <- lb_base * (1 + adj)
+      n_pobres_z <- sum(data_z$ing_pc_mensual < lb_adj, na.rm = TRUE)
+      
+      a_post    <- a_prior + n_pobres_z
+      b_post    <- b_prior + (n_total_z - n_pobres_z)
+      
+      theta_grid <- seq(0, 1, length.out = 500)
+      densidad   <- dbeta(theta_grid, a_post, b_post)
+      
+      df_curvas <- bind_rows(df_curvas,
+                             tibble(
+                               theta        = theta_grid,
+                               densidad     = densidad,
+                               prior        = prior_nombre,
+                               zona         = z,
+                               ajuste_label = paste0(round(adj * 100), "%")
+                             ))
+    }
+  }
+}
+
+df_curvas$ajuste_label <- factor(df_curvas$ajuste_label, levels = ajustes_labels)
+
+p_todos_priors <- ggplot(df_curvas, aes(x = theta, y = densidad, fill = ajuste_label)) +
+  geom_area(alpha = 0.4, position = "identity") +
+  scale_x_continuous(labels = percent_format(accuracy = 1), limits = c(0, 1)) +
+  scale_fill_brewer(palette = "RdYlBu", direction = -1, name = "Ajuste de línea") +
+  facet_grid(prior ~ zona, scales = "free_y") +
+  labs(
+    title    = paste("Sensibilidad a la línea de bienestar para diferentes priors",
+                     "(submuestra de", n_muestra, "hogares)"),
+    subtitle = "Cada panel muestra la distribución posterior de la tasa de pobreza según el ajuste de línea",
+    x = "Tasa de pobreza (θ)", y = "Densidad posterior"
+  ) +
+  theme_minimal(base_size = 10) +
+  theme(
+    legend.position = "bottom",
+    strip.text      = element_text(face = "bold"),
+    axis.text.x     = element_text(angle = 45, hjust = 1)
+  )
+
+p_todos_priors
+
+
+# # 12 Reflexiones finales del laboratorio
