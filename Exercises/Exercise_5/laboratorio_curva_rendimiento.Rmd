@@ -1,0 +1,755 @@
+---
+title: "Transmisión de la política monetaria y curva de rendimiento en México"
+subtitle: "Laboratorio de Macroeconomía I — Maestría en Economía"
+author: "Tu nombre"
+date: "`r format(Sys.Date(), '%d de %B de %Y')`"
+lang: es
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    code_folding: show
+    df_print: paged
+params:
+  usar_cache: true
+  fecha_ini: "2008-01-01"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, message = FALSE, warning = FALSE,
+  fig.align = "center", fig.width = 9, fig.height = 5, dpi = 120
+)
+options(knitr.kable.NA = "–")
+```
+
+# Objetivo y preguntas guía
+
+Este laboratorio estudia **cómo se transmite la política monetaria de Banco de México (Banxico) a lo largo de la curva de rendimiento**: Banxico fija únicamente una tasa de muy corto plazo (la tasa objetivo a un día), pero las decisiones de consumo e inversión dependen de tasas a plazos mucho más largos. La pregunta de fondo es:
+
+> ¿Hasta qué punto, y por qué canales, una decisión sobre la tasa a un día mueve las tasas de 1 mes, 1 año, 10 años o 30 años?
+
+Para responderla trabajamos con datos reales del Sistema de Información Económica (SIE) de Banxico, descargados mediante su API, y los analizamos en seis **episodios** de la economía mexicana entre 2008 y 2026. A lo largo del documento se responden cuatro preguntas:
+
+1. **¿Cómo cambia la forma de la curva** (normal, plana, invertida) en cada episodio y por qué?
+2. **¿Qué pasa con la curva justo antes y después** de un evento relevante (una decisión de Banxico, un choque externo)?
+3. **¿Cómo se resume la curva en pocos factores** (nivel, pendiente, curvatura) y cómo evolucionan en el tiempo?
+4. **¿Cuánto del movimiento de la tasa objetivo se "traspasa"** a cada plazo (pass-through) y cómo cambia con el vencimiento?
+
+**Requisitos:** R ≥ 4.1 (se usa el operador `|>`), un token del SIE (gratuito, en <https://www.banxico.org.mx/SieAPIRest/service/v1/token>) guardado en `~/.Renviron` como `BANXICO_TOKEN=tu_token`, y los paquetes `httr2`, `jsonlite`, `dplyr`, `tidyr`, `purrr`, `lubridate`, `ggplot2` y `knitr` (opcional: `ggrepel` para que las etiquetas no se traslapen).
+
+# Marco conceptual
+
+Antes de tocar datos conviene fijar qué esperamos ver y por qué.
+
+## El instrumento de política
+
+Banxico no fija directamente las tasas de mercado: establece un **objetivo para la tasa de interés interbancaria a un día** (la *tasa objetivo*) y usa sus operaciones de liquidez para que las tasas de muy corto plazo se ubiquen en ese nivel. Su mandato prioritario es la estabilidad del poder adquisitivo de la moneda, con una meta de inflación de 3% (con un intervalo de variabilidad de ±1 punto).
+
+## La hipótesis de las expectativas
+
+La teoría estándar de la estructura temporal conecta la tasa a plazo $n$ con la trayectoria esperada de la tasa de corto plazo:
+
+$$
+i_t^{(n)} \;=\; \frac{1}{n}\sum_{k=0}^{n-1} E_t\!\left[i_{t+k}\right] \;+\; \phi_t^{(n)}
+$$
+
+donde $\phi_t^{(n)}$ es la **prima por plazo** (compensación por riesgo de mantener un instrumento largo). De aquí salen tres ideas que usaremos todo el laboratorio:
+
+- La tasa **corta** está anclada casi mecánicamente a la tasa objetivo (arbitraje entre instrumentos cercanos).
+- La tasa **larga** depende de la trayectoria *esperada* de la tasa objetivo, no solo de su nivel actual. Un recorte que el mercado ya esperaba mueve poco las tasas largas; uno inesperado las mueve más.
+- Cualquier cambio en la **prima por plazo** (incertidumbre, riesgo fiscal, aversión global al riesgo) mueve las tasas largas aunque Banxico no toque su tasa.
+
+Con la relación de Fisher, $i = r + E[\pi]$, las tasas nominales largas también reflejan las **expectativas de inflación**: si el público deja de creer que la inflación convergerá a 3%, las tasas largas suben aunque la tasa objetivo no cambie. Esto conecta este laboratorio con la Encuesta de Expectativas del Sector Privado de Banxico.
+
+## Cómo leer la forma de la curva
+
+| Forma | Qué sugiere (bajo la hipótesis de expectativas) |
+|---|---|
+| **Normal** (pendiente positiva) | Se esperan tasas de corto plazo estables o al alza, y/o hay prima por plazo positiva |
+| **Plana** | Transición: el mercado no espera cambios o duda de la dirección |
+| **Invertida** (pendiente negativa) | Se esperan recortes futuros (típico tras un ciclo de alzas o ante una desaceleración) |
+
+## Qué esperamos encontrar
+
+1. Los plazos **cortos** se mueven casi uno a uno con la tasa objetivo.
+2. El **traspaso cae con el plazo**: los plazos largos responden menos a la tasa del día.
+3. Los **choques globales** (crisis financiera, Fed, aranceles) mueven sobre todo el extremo largo, vía prima por plazo y tipo de cambio.
+4. La **credibilidad** del banco central importa: una política creíble ancla las tasas largas aun cuando las cortas se mueven mucho.
+
+# Datos
+
+## Instrumentos: Cetes y Bonos M
+
+Analizamos **dos familias de instrumentos del Gobierno Federal por separado**, porque tienen plazos y frecuencias de emisión distintos:
+
+| Familia | Qué es | Plazos | Frecuencia de subasta |
+|---|---|---|---|
+| **Cetes** | Certificados de la Tesorería, cupón cero (descuento) | 28, 91, 182 y 364 días | Semanal |
+| **Bonos M** | Bonos de tasa fija nominal, cupón cada 182 días | 3, 5, 10, 20 y 30 años | Cada 4 semanas (3 y 5 años); cada 6 semanas (10, 20 y 30 años) |
+
+Usamos la **tasa de rendimiento en subasta primaria** (cuadro CF107 del SIE). Esto tiene una consecuencia metodológica importante: **los datos no son diarios**. Cada observación es el resultado de una subasta, y el "dato más reciente" de un Bono M a 30 años puede tener hasta seis semanas de antigüedad. Por eso la sección de antes/después usa "la subasta previa y la posterior" en lugar de ventanas de días fijos.
+
+## Series a descargar
+
+Cada fila de las tablas siguientes es una serie del SIE. Los plazos de los Cetes se rotulan en meses (28 días ≈ 1 mes, 91 ≈ 3, 182 ≈ 6, 364 ≈ 12) y `plazo_anios` guarda el plazo exacto en años, que usaremos más adelante en el ajuste de Nelson-Siegel.
+
+```{r librerias}
+library(httr2)
+library(jsonlite)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(lubridate)
+library(ggplot2)
+```
+
+```{r series}
+series_cetes <- tribble(
+  ~id,       ~etiqueta,   ~plazo_anios,
+  "SF43936", "1 mes",      28/365,
+  "SF43939", "3 meses",    91/365,
+  "SF43942", "6 meses",   182/365,
+  "SF43945", "12 meses",  364/365
+) |> mutate(familia = "Cetes")
+
+series_bonos <- tribble(
+  ~id,        ~etiqueta,  ~plazo_anios,
+  "SF43883",  "3 años",    3,
+  "SF43886",  "5 años",    5,
+  "SF44071",  "10 años",  10,
+  "SF45384",  "20 años",  20,
+  "SF60696",  "30 años",  30
+) |> mutate(familia = "Bonos M")
+
+# Un solo catálogo, ordenado por plazo; `etiqueta` es factor para que los
+# ejes de las gráficas respeten el orden de los vencimientos.
+series <- bind_rows(series_cetes, series_bonos) |>
+  arrange(plazo_anios) |>
+  mutate(etiqueta = factor(etiqueta, levels = unique(etiqueta)))
+
+id_tasa_objetivo <- "SF61745"   # Tasa objetivo de Banxico
+fecha_ini <- params$fecha_ini
+fecha_fin <- as.character(Sys.Date())
+
+series |> select(familia, etiqueta, id, plazo_anios)
+```
+
+> **Verifica los IDs.** Los identificadores provienen de fuentes públicas; la sección 3.4 imprime el título que devuelve la API para cada serie, y debes confirmar que corresponde al plazo esperado antes de interpretar resultados.
+
+## Cómo funciona la API del SIE
+
+La API de Banxico es una API REST. Cada consulta tiene la forma:
+
+```
+https://www.banxico.org.mx/SieAPIRest/service/v1/series/{ids}/datos/{fecha_ini}/{fecha_fin}
+```
+
+- El **token** viaja en el encabezado `Bmx-Token`.
+- Se pueden pedir **varias series separadas por comas** (hasta 20) en una sola llamada.
+- La respuesta es un JSON con una lista de series; cada una trae su `idSerie`, su `titulo` y un arreglo `datos` con pares `fecha` (formato `dd/mm/aaaa`) y `dato` (texto).
+- Los datos faltantes aparecen como `"N/E"` (no existe), por lo que al convertir a número los descartamos.
+
+La función `get_sie()` hace la consulta (con reintentos automáticos si falla) y devuelve un *tibble* ordenado: una fila por serie y fecha.
+
+```{r funcion-api}
+get_sie <- function(ids, ini, fin, token) {
+  base <- "https://www.banxico.org.mx/SieAPIRest/service/v1/series"
+  url  <- sprintf("%s/%s/datos/%s/%s", base, paste(ids, collapse = ","), ini, fin)
+
+  resp <- request(url) |>
+    req_headers("Bmx-Token" = token, Accept = "application/json") |>
+    req_retry(max_tries = 3) |>
+    req_perform()
+
+  raw <- resp_body_json(resp, simplifyVector = FALSE)$bmx$series
+
+  map_dfr(raw, function(s) {
+    if (is.null(s$datos)) return(NULL)
+    tibble(
+      id     = s$idSerie,
+      titulo = s$titulo,
+      fecha  = dmy(map_chr(s$datos, "fecha")),
+      valor  = suppressWarnings(as.numeric(gsub(",", "", map_chr(s$datos, "dato"))))
+    )
+  }) |>
+    filter(!is.na(valor))   # elimina "N/E"
+}
+```
+
+## Descarga y verificación
+
+Para no saturar la API en cada compilación del documento, los datos se guardan en `datos_banxico.rds`. Si el archivo existe y `usar_cache: true`, se lee de ahí; para refrescar, borra el archivo o cambia el parámetro a `false`.
+
+```{r descarga}
+archivo_cache <- "datos_banxico.rds"
+
+if (params$usar_cache && file.exists(archivo_cache)) {
+  datos <- readRDS(archivo_cache)
+} else {
+  token <- Sys.getenv("BANXICO_TOKEN")
+  stopifnot("Falta el token: define BANXICO_TOKEN en ~/.Renviron" = nzchar(token))
+  datos <- get_sie(c(series$id, id_tasa_objetivo), fecha_ini, fecha_fin, token)
+  saveRDS(datos, archivo_cache)
+}
+
+# Verificación: ¿cada ID es la serie que esperábamos?
+datos |> distinct(id, titulo)
+```
+
+Separamos los datos en dos objetos: `rend` (rendimientos, con su familia y plazo) y `objetivo` (tasa objetivo).
+
+```{r separar}
+rend <- datos |>
+  filter(id %in% series$id) |>
+  left_join(series, by = "id")
+
+objetivo <- datos |>
+  filter(id == id_tasa_objetivo) |>
+  select(fecha, tasa_objetivo = valor)
+
+familias <- unique(as.character(rend$familia))
+familias
+```
+
+## Panorama general: rendimientos y tasa objetivo
+
+Antes de entrar a los episodios, miramos todo el periodo. La línea punteada es la tasa objetivo. Las series de **Cetes** deberían pegarse a ella; las de **Bonos M** se separan más, sobre todo en los plazos largos, y reflejan expectativas y prima por plazo.
+
+```{r panorama, fig.height=7}
+ggplot() +
+  geom_line(data = rend, aes(fecha, valor, colour = etiqueta), linewidth = 0.6) +
+  geom_step(data = objetivo, aes(fecha, tasa_objetivo),
+            colour = "black", linetype = "dashed", linewidth = 0.6) +
+  facet_wrap(~ familia, ncol = 1) +
+  scale_colour_viridis_d(option = "D", end = 0.9) +
+  labs(title = "Rendimientos de subasta y tasa objetivo (línea punteada)",
+       x = NULL, y = "Tasa (%)", colour = "Plazo",
+       caption = "Fuente: SIE, Banco de México") +
+  theme_minimal() +
+  theme(strip.text = element_text(face = "bold"))
+```
+
+# Herramientas de análisis
+
+Esta sección define las funciones que se reutilizan en todos los episodios.
+
+## Construir una curva en una fecha
+
+La función `curva_en(f)` devuelve, para cada plazo, **la última observación disponible hasta la fecha `f`**. Como los datos son por subasta, también guarda `fecha_dato`, la fecha real de esa observación, para que se pueda ver qué tan rezagado está cada punto.
+
+```{r curva-en}
+curva_en <- function(f, d = rend) {
+  d |>
+    filter(fecha <= f) |>
+    group_by(id) |>
+    slice_max(fecha, n = 1, with_ties = FALSE) |>
+    ungroup() |>
+    transmute(fecha_curva = f, familia, etiqueta, plazo_anios,
+              rendimiento = valor, fecha_dato = fecha)
+}
+```
+
+## Antes y después de un evento
+
+Para medir cómo reacciona la curva a un evento en la fecha `f`, comparamos **la última subasta anterior** a `f` contra **la primera subasta posterior**, plazo por plazo. Dos decisiones de diseño:
+
+- **Subasta previa / posterior, no ventanas fijas.** Con subastas cada 4–6 semanas (Bonos M), una ventana de, digamos, 7 días tomaría casi siempre la misma observación antes y después, y la comparación sería vacía.
+- **Ventana máxima por familia.** Si la subasta más cercana queda demasiado lejos del evento, se descarta, porque ya no mide el efecto del evento sino el de todo lo ocurrido entre tanto. Usamos 14 días para Cetes y 60 para Bonos M (ajustable en `ventana`).
+
+```{r antes-despues}
+ventana <- c("Cetes" = 14, "Bonos M" = 60)
+
+antes_despues <- function(f, d = rend) {
+  antes <- d |>
+    filter(fecha < f) |>
+    group_by(id) |>
+    slice_max(fecha, n = 1, with_ties = FALSE) |>
+    ungroup() |>
+    mutate(momento = "Antes")
+
+  despues <- d |>
+    filter(fecha > f) |>
+    group_by(id) |>
+    slice_min(fecha, n = 1, with_ties = FALSE) |>
+    ungroup() |>
+    mutate(momento = "Después")
+
+  bind_rows(antes, despues) |>
+    filter(abs(as.integer(fecha - f)) <= ventana[as.character(familia)]) |>
+    transmute(fecha_curva = f, familia, etiqueta, plazo_anios,
+              rendimiento = valor, fecha_dato = fecha, momento,
+              fecha_evento = f)
+}
+```
+
+> **Limitación a tener presente.** Cada plazo usa *su propia* subasta, así que los puntos de una misma curva pueden venir de fechas distintas. Es una consecuencia inevitable de usar subastas en lugar de cotizaciones diarias de mercado secundario.
+
+## Gráficas
+
+`graf_ba()` dibuja el antes (gris) y el después (naranja) con un panel por evento. El eje x es **categórico** y muestra el nombre real de cada plazo (1 mes, 3 meses, … / 3 años, 5 años, …), con los puntos equiespaciados; así se lee el nombre del instrumento y no una escala numérica engañosa.
+
+```{r graf-ba}
+graf_ba <- function(d, titulo,
+                    caption = paste0("Antes = subasta previa; Después = subasta posterior. ",
+                                     "Fuente: SIE, Banco de México")) {
+  ggplot(d, aes(etiqueta, rendimiento, colour = momento, group = momento)) +
+    geom_line(linewidth = 0.9) +
+    geom_point(size = 2) +
+    facet_wrap(~ panel, scales = "free_y") +
+    scale_colour_manual(values = c("Antes" = "grey55", "Después" = "#d95f02")) +
+    labs(title = titulo, x = "Plazo", y = "Rendimiento (%)", colour = NULL,
+         caption = caption) +
+    theme_minimal() +
+    theme(strip.text = element_text(face = "bold"), legend.position = "bottom")
+}
+```
+
+# Los seis episodios
+
+## Cómo se eligieron las fechas
+
+Elegimos 19 fechas agrupadas en **seis episodios** que cubren los grandes regímenes de política monetaria y choques de la economía mexicana desde 2008. Cada fecha es un punto de quiebre: una decisión relevante de Banxico, un choque externo o un evento político con efecto en mercados.
+
+```{r fechas-clave}
+fechas_clave <- tribble(
+  ~fecha,        ~episodio,                          ~evento,
+  "2008-09-15",  "1. Crisis global 2008-11",         "Quiebra de Lehman",
+  "2009-07-17",  "1. Crisis global 2008-11",         "Último recorte (4.50%)",
+  "2011-08-05",  "1. Crisis global 2008-11",         "S&P degrada a EE.UU.",
+  "2013-05-22",  "2. Taper y normalización 2013-15", "Taper tantrum",
+  "2014-06-06",  "2. Taper y normalización 2013-15", "Recorte a 3.00%",
+  "2015-12-17",  "2. Taper y normalización 2013-15", "Alza tras despegue de la Fed",
+  "2016-11-09",  "3. Trump y alzas 2016-18",         "Trump gana la elección",
+  "2017-12-14",  "3. Trump y alzas 2016-18",         "Alza a 7.25%",
+  "2018-12-20",  "3. Trump y alzas 2016-18",         "Alza a 8.25%",
+  "2019-08-15",  "4. Pre-COVID y COVID 2019-20",     "Primer recorte",
+  "2020-03-20",  "4. Pre-COVID y COVID 2019-20",     "Recorte de emergencia",
+  "2021-06-24",  "5. Endurecimiento 2021-23",        "Primera alza",
+  "2022-09-29",  "5. Endurecimiento 2021-23",        "Alza de 75 pb",
+  "2023-03-30",  "5. Endurecimiento 2021-23",        "Pico (11.25%)",
+  "2024-03-21",  "6. Recortes 2024-26",              "Primer recorte del ciclo",
+  "2025-02-06",  "6. Recortes 2024-26",              "Recorte de 50 pb",
+  "2025-12-18",  "6. Recortes 2024-26",              "Recorte a 7.00%",
+  "2026-05-07",  "6. Recortes 2024-26",              "Recorte a 6.50% (fin del ciclo)",
+  "2026-09-24",  "6. Recortes 2024-26",              "Mantiene en 6.50%"
+) |>
+  mutate(fecha = as.Date(fecha))
+
+fechas_clave
+```
+
+> **Nota sobre las fechas.** Las decisiones de política monetaria de 2024 a 2026 se confirmaron contra los comunicados de Banxico. Las fechas de 2008 a 2023 están tomadas de la memoria del autor del laboratorio: **verifícalas contra la serie de la tasa objetivo** (sección 6 las detecta automáticamente) o contra el calendario de decisiones de Banxico antes de entregar.
+
+## Mapa de curvas por episodio
+
+Primero, una vista de conjunto: para cada episodio, las curvas de cada fecha clave. Sirve para comparar **niveles y formas** entre fechas. La etiqueta al final de cada línea indica la fecha de la curva.
+
+```{r mapa-curvas-datos}
+curvas <- fechas_clave |>
+  mutate(curva = map(fecha, curva_en)) |>
+  unnest(curva) |>
+  mutate(episodio  = factor(episodio, levels = unique(fechas_clave$episodio)),
+         fecha_lbl = format(fecha, "%Y-%m-%d"))
+
+graf_curvas <- function(fam) {
+  d   <- curvas |> filter(familia == fam) |> droplevels()
+  ult <- d |> group_by(fecha) |> slice_max(plazo_anios, n = 1, with_ties = FALSE) |> ungroup()
+
+  # Si está instalado ggrepel, las etiquetas no se traslapan
+  etiquetas <- if (requireNamespace("ggrepel", quietly = TRUE)) {
+    ggrepel::geom_text_repel(data = ult, aes(label = fecha_lbl), hjust = 0,
+                             nudge_x = 0.15, direction = "y", size = 3,
+                             segment.color = NA, show.legend = FALSE)
+  } else {
+    geom_text(data = ult, aes(label = fecha_lbl), hjust = -0.1, size = 3,
+              show.legend = FALSE)
+  }
+
+  ggplot(d, aes(etiqueta, rendimiento, group = fecha, colour = fecha_lbl)) +
+    geom_line(linewidth = 0.9) +
+    geom_point(size = 1.8) +
+    etiquetas +
+    facet_wrap(~ episodio, ncol = 2) +
+    scale_x_discrete(expand = expansion(add = c(0.4, 1.8))) +
+    scale_colour_viridis_d(option = "D", end = 0.9) +
+    labs(title = paste("Curva de rendimiento de", fam, "por episodio"),
+         x = "Plazo", y = "Rendimiento (%)",
+         caption = "Fuente: SIE, Banco de México") +
+    theme_minimal() +
+    theme(legend.position = "none", strip.text = element_text(face = "bold"))
+}
+```
+
+```{r mapa-cetes, fig.height=8}
+graf_curvas("Cetes")
+```
+
+```{r mapa-bonos, fig.height=8}
+graf_curvas("Bonos M")
+```
+
+## Preparar el antes/después de todos los episodios
+
+Aplicamos `antes_despues()` a las 19 fechas y construimos dos objetos: `ba_clave` (los datos para graficar) y `cambios_ba` (el cambio en puntos base por plazo, junto con qué tan lejos del evento quedó cada subasta usada).
+
+```{r ba-clave}
+ba_clave <- fechas_clave |>
+  mutate(res = map(fecha, antes_despues)) |>
+  unnest(res) |>
+  arrange(fecha) |>
+  mutate(episodio  = factor(episodio, levels = unique(fechas_clave$episodio)),
+         momento   = factor(momento, levels = c("Antes", "Después")),
+         panel_chr = paste0(format(fecha, "%Y-%m-%d"), "\n", evento),
+         panel     = factor(panel_chr, levels = unique(panel_chr)))
+
+cambios_ba <- ba_clave |>
+  select(fecha, episodio, evento, familia, etiqueta, plazo_anios,
+         momento, rendimiento, fecha_dato) |>
+  pivot_wider(names_from = momento, values_from = c(rendimiento, fecha_dato)) |>
+  mutate(cambio_pb    = (`rendimiento_Después` - rendimiento_Antes) * 100,
+         dias_antes   = as.integer(fecha - fecha_dato_Antes),
+         dias_despues = as.integer(`fecha_dato_Después` - fecha)) |>
+  arrange(familia, fecha, plazo_anios)
+
+# Dos funciones auxiliares para presentar un episodio completo
+muestra_episodio <- function(ep) {
+  for (fam in familias) {
+    d <- ba_clave |> filter(familia == fam, episodio == ep) |> droplevels()
+    if (nrow(d) > 0) print(graf_ba(d, paste0(fam, " — ", ep)))
+  }
+}
+
+tabla_episodio <- function(ep) {
+  for (fam in familias) {
+    t <- cambios_ba |>
+      filter(episodio == ep, familia == fam) |>
+      droplevels() |>
+      transmute(Fecha = format(fecha, "%Y-%m-%d"), Evento = evento,
+                Plazo = etiqueta, cambio = round(cambio_pb)) |>
+      pivot_wider(names_from = Plazo, values_from = cambio)
+    if (nrow(t) > 0) {
+      cat("\n\n**", fam, "** — cambio entre la subasta previa y la posterior (puntos base)\n\n", sep = "")
+      print(knitr::kable(t))
+    }
+  }
+}
+```
+
+Cada episodio se presenta con el mismo esquema: **contexto**, **lógica económica** (qué esperaríamos ver según el marco conceptual), **gráficas y tabla** y **qué observar**. Las secciones de "lógica" plantean *hipótesis de lectura*; confirma con tus gráficas si se cumplen.
+
+## Episodio 1. Crisis global financiera, 2008-2011
+
+**Contexto.** Durante 2008 Banxico había endurecido su política por presiones inflacionarias (alimentos y energía), con la tasa objetivo en 8.25%. La quiebra de Lehman Brothers (15 de septiembre de 2008) desató una crisis global de liquidez: el peso se depreció con fuerza, Banxico intervino en el mercado cambiario y la economía mexicana, muy integrada con la de Estados Unidos, sufrió una de sus contracciones más severas (el PIB cayó alrededor de 5% en 2009). Banxico revirtió su postura y recortó agresivamente: el 17 de abril de 2009 bajó la tasa 75 puntos base y llegó a **4.50% el 17 de julio de 2009**, nivel en el que se mantuvo hasta 2013. En abril de 2009 México también accedió a la Línea de Crédito Flexible del FMI como respaldo ante la crisis. El 5 de agosto de 2011, la degradación de la deuda de Estados Unidos por S&P y la crisis de deuda en la zona del euro reactivaron la aversión global al riesgo.
+
+**Lógica económica.**
+
+- *15-sep-2008*: la curva parte con tasas cortas altas (~8%) y la política aún restrictiva. Esperamos una **curva casi plana**: el mercado todavía no incorpora los recortes que vendrán.
+- *17-jul-2009*: la tasa objetivo ya cayó casi 400 pb. Esperamos que **los plazos cortos hayan caído mucho más que los largos** (curva más empinada), porque los largos incorporan la expectativa de que la tasa se normalice.
+- *5-ago-2011*: con la política en pausa en 4.50%, los movimientos vienen de **fuera**: un choque de aversión al riesgo mueve la prima por plazo, no la tasa objetivo.
+
+**Qué observar.** Compara el *nivel* de la curva de 2008 contra 2009 y 2011 (cuánto bajó); y el *cambio en pb* por plazo alrededor de cada fecha. Si la transmisión fuera completa y uniforme, todos los plazos caerían lo mismo; esperamos que la caída sea mayor en el corto.
+
+```{r ep1-graf, fig.height=5}
+muestra_episodio("1. Crisis global 2008-11")
+```
+
+```{r ep1-tab, results='asis'}
+tabla_episodio("1. Crisis global 2008-11")
+```
+
+## Episodio 2. Taper tantrum y normalización de la Fed, 2013-2015
+
+**Contexto.** Tras la crisis, Banxico mantuvo la tasa en 4.50% hasta 2013 y luego la redujo gradualmente, impulsado por una inflación a la baja y por las reformas estructurales (entre ellas la energética, aprobada en diciembre de 2013). Los recortes culminaron en **3.00% en junio de 2014**, un mínimo histórico. El 22 de mayo de 2013, un testimonio del presidente de la Reserva Federal sugirió que se reduciría el ritmo de compra de activos (*taper*), lo que provocó una salida generalizada de capitales de economías emergentes y un alza de las tasas largas globales. Desde mediados de 2014 el petróleo se desplomó, presionando las finanzas públicas y el peso. El **16 de diciembre de 2015 la Fed subió su tasa por primera vez en casi una década**, y Banxico respondió al día siguiente con un alza de 25 pb a 3.25%, en parte para evitar una depreciación desordenada del peso.
+
+**Lógica económica.**
+
+- *22-may-2013 (taper tantrum)*: es un choque **externo de expectativas**: cambió la trayectoria esperada de la tasa de la Fed. Esperamos que **suban las tasas largas** (más prima por plazo y mayor rendimiento exigido a activos emergentes) sin que Banxico haya movido su tasa; los plazos cortos casi no deberían reaccionar.
+- *6-jun-2014 (recorte a 3.00%)*: el mercado ya descontaba buena parte del recorte; esperamos efectos pequeños en el corto y muy pequeños en el largo (**anticipación**).
+- *17-dic-2015 (alza de la Fed y de Banxico)*: Banxico sube junto con la Fed. Es un ejemplo de **acoplamiento** de la política monetaria mexicana a la de Estados Unidos por la vía del tipo de cambio y los flujos de capital.
+
+**Qué observar.** El taper tantrum es el mejor caso para ilustrar que las tasas largas pueden moverse **sin** que cambie la tasa objetivo. En 2014 y 2015 mira si el movimiento se concentra en los plazos cortos (decisión de Banxico) o también llega a los largos.
+
+```{r ep2-graf, fig.height=5}
+muestra_episodio("2. Taper y normalización 2013-15")
+```
+
+```{r ep2-tab, results='asis'}
+tabla_episodio("2. Taper y normalización 2013-15")
+```
+
+## Episodio 3. Elección de Trump y ciclo de alzas, 2016-2018
+
+**Contexto.** Entre diciembre de 2015 y diciembre de 2018 Banxico llevó la tasa objetivo de 3.25% a **8.25%**, uno de los ciclos de alzas más intensos de su historia reciente. Hubo tres motores: la **depreciación del peso** (agravada tras la elección de Donald Trump el 8 de noviembre de 2016, por sus amenazas comerciales hacia México y la incertidumbre sobre el TLCAN), el **repunte de la inflación** (liberalización de los precios de gasolinas a inicios de 2017, que llevó la inflación por encima de 6%) y el endurecimiento de la **Fed**. El 14 de diciembre de 2017 la tasa llegó a 7.25%; el 20 de diciembre de 2018, a 8.25%, ya con el nuevo gobierno en funciones (inició el 1 de diciembre) y tras la cancelación del aeropuerto de Texcoco (29 de octubre de 2018), que elevó la percepción de riesgo.
+
+**Lógica económica.**
+
+- *9-nov-2016 (elección de Trump)*: choque de **riesgo y tipo de cambio**. Esperamos alzas en las tasas cortas y largas, con mayor prima por plazo por la incertidumbre.
+- *14-dic-2017 y 20-dic-2018 (alzas de Banxico)*: son alzas de un ciclo largo y ampliamente anticipado. Esperamos **traspaso fuerte al corto y más débil al largo**, porque el mercado ya sabía que Banxico estaba subiendo.
+
+**Qué observar.** En este episodio las tasas cortas suben de forma sostenida; compara si la curva se **aplana** (el corto sube más que el largo) conforme avanza el ciclo, lo que indicaría que el mercado espera que el endurecimiento sea temporal.
+
+```{r ep3-graf, fig.height=5}
+muestra_episodio("3. Trump y alzas 2016-18")
+```
+
+```{r ep3-tab, results='asis'}
+tabla_episodio("3. Trump y alzas 2016-18")
+```
+
+## Episodio 4. Pre-COVID y COVID, 2019-2020
+
+**Contexto.** En 2019 la economía mexicana estaba estancada y la inflación convergía a la baja. El **15 de agosto de 2019** Banxico dio su primer recorte tras el ciclo de alzas (de 8.25% a 8.00%), alineándose con el giro de la Fed. Luego vino la pandemia: el 11 de marzo de 2020 la OMS la declaró como tal; al mismo tiempo se derrumbaron los precios del petróleo y el peso se depreció a niveles cercanos a 25 por dólar. El **20 de marzo de 2020** Banxico realizó un **recorte extraordinario** (fuera de calendario) de 50 pb a 6.50% y anunció medidas de provisión de liquidez. El ciclo de recortes siguió hasta 4.00% a inicios de 2021.
+
+**Lógica económica.**
+
+- *15-ago-2019*: recorte gradual y comunicado, con el mercado ya anticipándolo. Esperamos un movimiento **moderado**, sobre todo en el corto plazo.
+- *20-mar-2020*: es un episodio de **estrés financiero**. Con una crisis de liquidez, los diferenciales se ensanchan: los plazos largos pueden **subir** (más prima por plazo, huida hacia liquidez) mientras el corto baja, aun con un recorte de la tasa objetivo. Un buen ejemplo de que "recortar" no garantiza que **toda** la curva baje.
+
+**Qué observar.** Fíjate en la *dirección* del cambio en el extremo largo el 20 de marzo de 2020: si sube mientras la tasa objetivo baja, la curva se **empina** por la prima de riesgo, no por expectativas de política. Esto se relaciona con la discusión de transmisión en condiciones de estrés.
+
+```{r ep4-graf, fig.height=5}
+muestra_episodio("4. Pre-COVID y COVID 2019-20")
+```
+
+```{r ep4-tab, results='asis'}
+tabla_episodio("4. Pre-COVID y COVID 2019-20")
+```
+
+## Episodio 5. Endurecimiento posterior a la pandemia, 2021-2023
+
+**Contexto.** La reapertura de la economía, los cuellos de botella en las cadenas de suministro y, desde febrero de 2022, el choque de energía y alimentos por la invasión rusa de Ucrania llevaron la inflación mundial a niveles no vistos en décadas; en México la inflación general llegó a alrededor de 8.7% en 2022. Banxico inició el ciclo de alzas el **24 de junio de 2021** (de 4.00% a 4.25%), lo aceleró en 2022 —incluyendo un alza de **75 pb el 29 de septiembre de 2022**— mientras la Fed subía sus tasas a ritmo récord, y alcanzó el **pico de 11.25% el 30 de marzo de 2023**, nivel que mantuvo hasta marzo de 2024.
+
+**Lógica económica.**
+
+- *24-jun-2021*: inicio del ciclo, con una tasa muy baja. Esperamos una **curva empinada** (tasas cortas bajas) que empieza a aplanarse.
+- *29-sep-2022*: en plena aceleración. Esperamos fuerte traspaso al corto y **aplanamiento** de la curva.
+- *30-mar-2023*: en el pico, con la tasa objetivo muy por encima de la inflación esperada y de la tasa neutral. Bajo la hipótesis de las expectativas, esperaríamos una **curva plana o invertida**: el mercado anticipa que, tarde o temprano, la tasa tendrá que bajar.
+
+**Qué observar.** Este es el mejor episodio para ilustrar la **hipótesis de las expectativas**: cuando el nivel actual de la tasa es "demasiado alto" respecto a su promedio esperado futuro, los plazos largos quedan **por debajo** de los cortos. Compara el rendimiento a 12 meses de los Cetes contra el de los Bonos M a 10 años en las tres fechas, y calcula la pendiente.
+
+```{r ep5-graf, fig.height=5}
+muestra_episodio("5. Endurecimiento 2021-23")
+```
+
+```{r ep5-tab, results='asis'}
+tabla_episodio("5. Endurecimiento 2021-23")
+```
+
+## Episodio 6. Ciclo de recortes y tensiones comerciales, 2024-2026
+
+**Contexto.** Tras un año en 11.25%, Banxico inició el **21 de marzo de 2024** el ciclo de recortes (25 pb). Ese año hubo elecciones en México (2 de junio) y en Estados Unidos (5 de noviembre). A partir de 2025 los **aranceles de Estados Unidos** y la incertidumbre en torno a la revisión del T-MEC dominaron el entorno externo; Banxico recortó 50 pb el **6 de febrero de 2025** y otros 50 pb el 27 de marzo, y continuó recortando, ya con pasos más pequeños, hasta **7.00% el 18 de diciembre de 2025**. En 2026 bajó a 6.75% (26 de marzo) y a **6.50% el 7 de mayo de 2026**, donde la Junta de Gobierno señaló que concluía el ciclo iniciado en marzo de 2024. El 1 de julio de 2026, en la primera revisión conjunta del T-MEC, Estados Unidos no aceptó renovar el tratado por 16 años más; el acuerdo sigue vigente, con revisiones anuales. El **24 de septiembre de 2026** Banxico mantuvo la tasa en 6.50% por unanimidad.
+
+**Lógica económica.**
+
+- *21-mar-2024 y 6-feb-2025*: recortes graduales. Si el mercado los esperaba, esperamos traspaso moderado al corto y poco al largo.
+- *18-dic-2025, 7-may-2026, 24-sep-2026*: el ciclo se acerca a su fin. Cuando el mercado cree que la tasa terminal ya está cerca, el recorte adicional **no mueve** los plazos largos; estos responden más a la prima por plazo (riesgo comercial y fiscal) que a la tasa de política.
+
+**Qué observar.** Este es el episodio más reciente y el que mejor permite estudiar el **desacoplamiento** entre el corto y el largo: ¿la curva se empina porque el corto baja y el largo no? Eso sería consistente con una prima por plazo creciente o con expectativas de inflación menos ancladas.
+
+```{r ep6-graf, fig.height=7}
+muestra_episodio("6. Recortes 2024-26")
+```
+
+```{r ep6-tab, results='asis'}
+tabla_episodio("6. Recortes 2024-26")
+```
+
+# Detección automática de cambios en la tasa objetivo
+
+Las fechas clave se eligieron a mano; aquí detectamos **todos** los cambios de la tasa objetivo directamente de la serie del SIE. Sirve para dos cosas: **validar** las fechas de los episodios y tener la base para un estudio de eventos con todas las decisiones.
+
+Un detalle importante: la serie reporta la fecha de **entrada en vigor** de la nueva tasa, que es un día hábil después del anuncio. Por eso, para centrar el análisis en el anuncio, restamos un día a cada fecha.
+
+```{r cambios-tasa}
+cambios_tasa <- objetivo |>
+  arrange(fecha) |>
+  mutate(delta_pb = (tasa_objetivo - lag(tasa_objetivo)) * 100) |>
+  filter(!is.na(delta_pb), delta_pb != 0)
+
+cambios_tasa |>
+  mutate(tipo = if_else(delta_pb > 0, "Alza", "Recorte")) |>
+  count(tipo)
+
+cambios_tasa |> slice_tail(n = 10)
+```
+
+Las curvas antes y después de las cinco decisiones más recientes:
+
+```{r ejemplo-4b, fig.height=5}
+ejemplo <- cambios_tasa |>
+  slice_tail(n = 5) |>
+  transmute(fecha = fecha - 1) |>     # fecha del anuncio
+  mutate(res = map(fecha, antes_despues)) |>
+  unnest(res) |>
+  mutate(panel   = format(fecha, "%Y-%m-%d"),
+         momento = factor(momento, levels = c("Antes", "Después")))
+
+for (fam in familias) {
+  print(graf_ba(ejemplo |> filter(familia == fam) |> droplevels(),
+                paste("Curva de", fam, "antes y después de cambios en la tasa objetivo")))
+}
+```
+
+# Nelson-Siegel: nivel, pendiente y curvatura
+
+## La idea
+
+Una curva con nueve puntos se puede resumir en **tres números** con la parametrización de Nelson-Siegel:
+
+$$
+y(\tau) \;=\; \beta_0 \;+\; \beta_1\,\frac{1-e^{-\tau/\lambda}}{\tau/\lambda} \;+\; \beta_2\left[\frac{1-e^{-\tau/\lambda}}{\tau/\lambda} - e^{-\tau/\lambda}\right]
+$$
+
+Cada parámetro tiene una lectura económica:
+
+| Factor | Interpretación | Relación con la política monetaria |
+|---|---|---|
+| $\beta_0$ **(nivel)** | Tasa de largo plazo (el límite cuando $\tau \to \infty$) | Expectativas de inflación y tasa neutral de largo plazo |
+| $\beta_1$ **(pendiente)** | Tasa corta menos tasa larga: $y(0) = \beta_0 + \beta_1$ | Postura actual de política: *negativo* con curva empinada, *positivo* con curva invertida |
+| $\beta_2$ **(curvatura)** | Joroba en el mediano plazo | Expectativas de cambios de dirección de la política |
+
+> **Cuidado con el signo.** En esta parametrización $\beta_1$ es "corto menos largo", así que un $\beta_1$ *negativo* indica una curva con pendiente positiva (normal), lo contrario a la convención habitual de "pendiente = largo − corto". Para evitar confusiones, también calculamos el **spread observado** entre el Bono M a 10 años y el Cete a 1 mes.
+
+## Método de estimación
+
+Si fijamos $\lambda$, el modelo es **lineal** en $(\beta_0, \beta_1, \beta_2)$ y se estima por mínimos cuadrados. Probamos una rejilla de valores de $\lambda$ y nos quedamos con el que minimiza la suma de errores cuadrados. Se necesitan al menos 6 plazos para que el ajuste sea informativo; por eso usamos Cetes y Bonos M **juntos**, en una sola curva.
+
+```{r nelson-siegel}
+ns_cargas <- function(tau, lambda) {
+  x  <- tau / lambda
+  f1 <- (1 - exp(-x)) / x
+  cbind(nivel = 1, pendiente = f1, curvatura = f1 - exp(-x))
+}
+
+ajusta_ns <- function(tau, y, lambdas = seq(0.3, 5, by = 0.1)) {
+  fits <- map(lambdas, function(l) {
+    X <- ns_cargas(tau, l)
+    m <- lm.fit(X, y)
+    list(lambda = l, beta = m$coefficients, sse = sum(m$residuals^2))
+  })
+  fits[[which.min(map_dbl(fits, "sse"))]]
+}
+
+ajuste_ns <- function(f) {
+  cv <- curva_en(f)
+  if (nrow(cv) < 6) return(NULL)
+  r   <- ajusta_ns(cv$plazo_anios, cv$rendimiento)
+  y10 <- cv$rendimiento[cv$etiqueta == "10 años"]
+  y1m <- cv$rendimiento[cv$etiqueta == "1 mes"]
+  tibble(fecha = f, lambda = r$lambda,
+         nivel = r$beta[1], pendiente = r$beta[2], curvatura = r$beta[3],
+         spread_10a_1m = if (length(y10) == 1 && length(y1m) == 1) y10 - y1m else NA_real_)
+}
+
+# Una curva por mes (último día de cada mes)
+fechas_mes <- seq(floor_date(as.Date(fecha_ini), "month") + months(1),
+                  floor_date(Sys.Date(), "month"), by = "month") - 1
+factores <- map_dfr(fechas_mes, ajuste_ns)
+
+factores |>
+  pivot_longer(c(nivel, pendiente, curvatura, spread_10a_1m), names_to = "factor") |>
+  ggplot(aes(fecha, value)) +
+  geom_line() +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey50") +
+  facet_wrap(~ factor, scales = "free_y", ncol = 1) +
+  labs(title = "Factores de Nelson-Siegel y spread observado (10 años − 1 mes)",
+       x = NULL, y = NULL,
+       caption = "Fuente: cálculos propios con datos del SIE, Banco de México") +
+  theme_minimal() +
+  theme(strip.text = element_text(face = "bold"))
+```
+
+**Cómo leerlo.**
+
+- Cuando el **spread 10a − 1m** cae por debajo de cero, la curva está invertida; compáralo con el Episodio 5.
+- El **nivel** (β₀) debería moverse con las expectativas de inflación de largo plazo y la tasa neutral; suele ser más estable que la pendiente.
+- Como cada plazo usa su última subasta, la curva de fin de mes mezcla observaciones de hasta seis semanas de antigüedad en los plazos largos. Es una aproximación razonable para ver tendencias, no para medir movimientos de un día.
+
+# Traspaso (pass-through) de la tasa objetivo
+
+## La idea
+
+La pregunta central del laboratorio se puede traducir en una regresión: para cada plazo $j$ y a frecuencia mensual,
+
+$$
+\Delta y_{j,t} \;=\; \alpha_j \;+\; \beta_j\,\Delta i^{obj}_t \;+\; \varepsilon_{j,t}
+$$
+
+donde $\Delta i^{obj}_t$ es el cambio mensual de la tasa objetivo y $\Delta y_{j,t}$ el del rendimiento del plazo $j$. El coeficiente $\beta_j$ mide **cuántos puntos porcentuales se mueve el rendimiento por cada punto que se mueve la tasa objetivo**. Bajo el marco conceptual esperamos:
+
+- $\beta_j$ **cercano a 1** en los plazos más cortos (la tasa a 1 mes está casi atada a la tasa objetivo);
+- $\beta_j$ **decreciente con el plazo** en Cetes y, sobre todo, en Bonos M.
+
+```{r pass-through}
+mensual <- rend |>
+  mutate(mes = floor_date(fecha, "month")) |>
+  group_by(familia, etiqueta, plazo_anios, mes) |>
+  summarise(rend = mean(valor), .groups = "drop") |>
+  left_join(objetivo |>
+              mutate(mes = floor_date(fecha, "month")) |>
+              group_by(mes) |>
+              summarise(obj = last(tasa_objetivo), .groups = "drop"),
+            by = "mes") |>
+  arrange(familia, etiqueta, mes) |>
+  group_by(familia, etiqueta, plazo_anios) |>
+  mutate(d_rend = rend - lag(rend), d_obj = obj - lag(obj)) |>
+  ungroup() |>
+  drop_na(d_rend, d_obj)
+
+passthrough <- mensual |>
+  group_by(familia, etiqueta, plazo_anios) |>
+  group_modify(~ {
+    m <- lm(d_rend ~ d_obj, data = .x)
+    tibble(beta = coef(m)[2], ee = summary(m)$coefficients[2, 2],
+           r2 = summary(m)$r.squared, n = nrow(.x))
+  }) |>
+  ungroup() |>
+  arrange(plazo_anios)
+
+passthrough |> mutate(across(c(beta, ee, r2), ~ round(.x, 3)))
+```
+
+```{r pass-through-graf, fig.height=4.5}
+ggplot(passthrough, aes(etiqueta, beta, group = familia)) +
+  geom_pointrange(aes(ymin = beta - 1.96 * ee, ymax = beta + 1.96 * ee)) +
+  geom_line() +
+  facet_wrap(~ familia, scales = "free_x") +
+  labs(title = "Traspaso de la tasa objetivo a la curva",
+       x = "Plazo", y = "Coeficiente (pass-through)",
+       caption = "Barras: intervalo de confianza al 95%. Fuente: cálculos propios, SIE.") +
+  theme_minimal() +
+  theme(strip.text = element_text(face = "bold"))
+```
+
+## Cómo interpretar (y qué NO concluir)
+
+- **Esto es co-movimiento, no causalidad.** Banxico no cambia su tasa al azar: responde a la inflación, a la actividad y al tipo de cambio, que también mueven las tasas de mercado. Es un problema de **endogeneidad**.
+- **Anticipación.** Si el mercado esperaba el cambio, las tasas largas se movieron *antes* de la decisión, y la regresión mensual subestima el traspaso. El coeficiente que importa para la política es el de la **sorpresa**: el cambio de la tasa objetivo menos lo que se esperaba (por ejemplo, con la Encuesta de Expectativas del Sector Privado).
+- **Frecuencia de los datos.** Las subastas de Bonos M son cada 4–6 semanas, y los promedios mensuales suavizan los movimientos. Para estimaciones más precisas conviene usar tasas diarias de mercado secundario.
+- **Pocos episodios de cambio.** La tasa objetivo cambia pocas veces, así que la mayoría de los meses tiene $\Delta i^{obj}=0$; el coeficiente está determinado por relativamente pocas observaciones.
+
+# Conclusiones y preguntas para tu reporte
+
+Con los resultados anteriores, responde (con evidencia de tus gráficas y tablas):
+
+1. **Forma de la curva.** ¿En qué episodios la curva fue normal, plana o invertida? ¿Cómo se relaciona cada forma con la postura de política y con las expectativas del mercado?
+2. **Anticipación vs. sorpresa.** Compara el cambio en puntos base alrededor de un recorte esperado (por ejemplo, 2014) y de uno de emergencia (marzo de 2020). ¿Qué diferencias hay entre plazos?
+3. **Choques externos.** En el taper tantrum (2013) y la elección de Trump (2016), ¿qué plazos se movieron más? ¿Qué canal (prima por plazo, expectativas, tipo de cambio) explica cada caso?
+4. **Traspaso.** ¿Cae el traspaso con el plazo, como predice la hipótesis de las expectativas? ¿Qué tan distinto es el patrón en Cetes y en Bonos M?
+5. **Credibilidad.** Si la política es creíble, ¿qué debería pasar con el nivel de Nelson-Siegel ($\beta_0$) durante los ciclos de alzas? ¿Qué muestran tus datos?
+6. **Extensión.** ¿Cómo mejorarías la identificación? (Pista: sorpresas de política con la Encuesta de Expectativas, datos de mercado secundario, ventanas de evento intradía.)
+
+# Notas técnicas y limitaciones
+
+- **Datos por subasta.** Cetes se subastan cada semana y Bonos M cada 4–6 semanas; los rendimientos de subasta no son cotizaciones continuas de mercado.
+- **Curvas con fechas mezcladas.** Cada plazo aporta su propia observación más reciente; los puntos de una curva pueden diferir en fecha.
+- **Verificación de IDs.** Confirma que los títulos que imprime la API (sección 3.4) correspondan a los plazos esperados.
+- **Contexto de los episodios.** Las decisiones de 2024-2026 se verificaron contra comunicados de Banxico; el resto del contexto es una narrativa de apoyo que debes contrastar con el calendario oficial de Banxico y con los datos.
+- **Reproducibilidad.** `datos_banxico.rds` guarda los datos descargados; bórralo para refrescar.
+
+```{r info-sesion}
+sessionInfo()
+```
